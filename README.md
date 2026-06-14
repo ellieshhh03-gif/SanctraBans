@@ -31,7 +31,7 @@ GUI-first punishment plugin for Paper 1.21.x with built-in alt detection, IP mut
 
 | GUI | How to open | What you can do |
 |-----|-------------|-----------------|
-| **Punish menu** | `/punish <player>` or `/ban <player>` (no extra args) | Step through type → reason → duration → confirm; toggle silent & apply-to-alts |
+| **Punish menu** | `/punish <player>`, `/ban <player>` (no extra args), or any punish command with only the player name | Step through type → reason → duration → confirm; toggle silent & apply-to-alts. Types you can use match your punishment permissions |
 | **Player check** | `/check <player>` | View status, UUID/IP (if allowed), linked alts, kick, add note, open history, open punish menu, manage alts |
 | **History** | `/history <player>` or from check/banlist | Browse all punishments with filters; left-click to edit/revoke |
 | **Banlist** | `/banlist` or `/banlist <search>` | View active punishments server-wide; filter, search, browse pages; left-click to manage, right-click for player history |
@@ -106,7 +106,8 @@ The menu has up to four steps:
 
 **Shortcuts to the punish menu:**
 - `/check <player>` → Punish, Kick, or Add Note buttons
-- `/ban <player>` with no other arguments opens the punish menu (same as `/punish`)
+- `/ban <player>`, `/tempban <player>`, `/mute <player>`, etc. with no other arguments (requires the matching punishment permission)
+- `/punish <player>` (requires at least one punishment permission, e.g. `sanctrabans.ban` or `sanctrabans.mute`)
 
 ---
 
@@ -135,7 +136,7 @@ Shows the player's head with status lore:
 - Each punishment is shown as the **player's head** with full lore (type, status, reason, staff, dates, ID).
 - **Filter** (compass): All, Active, Expired, Bans, Mutes, Warns, Notes.
 - **Previous / Next:** browse through pages of results.
-- **Left-click** a punishment: open **Punishment Edit** (if you have edit permissions).
+- **Left-click** a punishment: open **Punishment Edit** (if you have permission to change reason, change duration, or revoke that type).
 
 ---
 
@@ -151,7 +152,13 @@ Shows the player's head with status lore:
 
 ### Punishment edit (from history or banlist)
 
-Available if you have any of: change reason, change duration, or GUI revoke permissions.
+Available when you have permission for at least one action on that punishment:
+
+| Action | Permission needed |
+|--------|-------------------|
+| Change reason | `sanctrabans.change-reason` |
+| Change duration | Matching temp permission (e.g. `sanctrabans.tempban` for temp bans) |
+| Revoke | Matching revoke permission (e.g. `sanctrabans.unban` for bans) |
 
 | Button | What it does |
 |--------|----------------|
@@ -238,12 +245,13 @@ When a GUI asks you to type in chat:
 /tempban Player #HackingBan Cheating
 ```
 
-**Open GUI instead of punishing:** run the command with only the player name:
+**Open GUI instead of punishing:** run any punish command with only the player name:
 ```
 /ban Player
 /tempban Player
+/mute Player
 ```
-(Requires punish menu permission.)
+Requires the matching punishment permission (e.g. `sanctrabans.ban` for `/ban Player`). Staff with any punishment permission can also use `/punish Player`.
 
 ---
 
@@ -267,9 +275,12 @@ When a GUI asks you to type in chat:
 
 ### Editing punishments
 
+**Command:**
 ```
 /change-reason <id> <new reason>
 ```
+
+**GUI:** left-click a punishment in history or banlist (requires `sanctrabans.change-reason`). To change duration on an active temp punishment, use the edit menu (requires the matching temp permission, e.g. `sanctrabans.tempban`).
 
 Syncs to alt batch punishments when `sync-reason-in-batch` is enabled in config.
 
@@ -360,33 +371,54 @@ All files live in **`plugins/SanctraBans/`**.
 
 All permissions use the prefix **`sanctrabans.`**. Grant `sanctrabans.all` for full access (typically admins only).
 
-### Punishment commands
+### How permissions work
+
+Each punishment or revoke permission covers **both commands and GUI**. There are no separate `gui.*` nodes.
+
+| Example permission | Command access | GUI access |
+|--------------------|----------------|------------|
+| `sanctrabans.ban` | `/ban <player> <reason>` | Open punish menu; select Ban |
+| `sanctrabans.tempban` | `/tempban <player> <duration> <reason>` | Open punish menu; select Temp Ban; change temp ban duration in edit menu |
+| `sanctrabans.unban` | `/unban <player>` | Revoke button in history/banlist edit menu |
+| `sanctrabans.change-reason` | `/change-reason <id> <reason>` | Change reason button in edit menu |
+
+**Opening the punish menu** (`/punish`, `/ban <player>` alone, check menu Punish button): requires at least one punishment-type permission (`ban`, `mute`, `kick`, etc.). Types you lack appear locked in the menu.
+
+`sanctrabans.punish` is an optional legacy alias that opens the punish menu without any specific punishment permission. Most servers should grant individual type permissions instead.
+
+### Punishment types
 
 | Permission | Description |
 |------------|-------------|
-| `sanctrabans.ban` | Permanent ban (`/ban`) |
-| `sanctrabans.tempban` | Temporary ban (`/tempban`) |
-| `sanctrabans.ipban` | Permanent IP ban (`/banip`) |
-| `sanctrabans.tempipban` | Temporary IP ban (`/tempipban`) |
-| `sanctrabans.mute` | Permanent mute (`/mute`) |
-| `sanctrabans.tempmute` | Temporary mute (`/tempmute`) |
-| `sanctrabans.ipmute` | Permanent IP mute (`/ipmute`) |
-| `sanctrabans.tempipmute` | Temporary IP mute (`/tempipmute`) |
-| `sanctrabans.warn` | Warn (`/warn`) |
-| `sanctrabans.tempwarn` | Temporary warn (`/tempwarn`) |
-| `sanctrabans.kick` | Kick (`/kick`) |
-| `sanctrabans.note` | Add staff notes (`/note`) |
+| `sanctrabans.ban` | Permanent ban (`/ban`) and punish menu access for bans |
+| `sanctrabans.tempban` | Temporary ban (`/tempban`) and punish menu access for temp bans |
+| `sanctrabans.ipban` | Permanent IP ban (`/banip`) and punish menu access |
+| `sanctrabans.tempipban` | Temporary IP ban (`/tempipban`) and punish menu access |
+| `sanctrabans.mute` | Permanent mute (`/mute`) and punish menu access |
+| `sanctrabans.tempmute` | Temporary mute (`/tempmute`) and punish menu access |
+| `sanctrabans.ipmute` | Permanent IP mute (`/ipmute`) and punish menu access |
+| `sanctrabans.tempipmute` | Temporary IP mute (`/tempipmute`) and punish menu access |
+| `sanctrabans.warn` | Warn (`/warn`) and punish menu access |
+| `sanctrabans.tempwarn` | Temporary warn (`/tempwarn`) and punish menu access |
+| `sanctrabans.kick` | Kick (`/kick`) and punish menu access |
+| `sanctrabans.note` | Add staff notes (`/note`) and punish menu access |
 
 ### Revoke commands
 
 | Permission | Description |
 |------------|-------------|
-| `sanctrabans.unban` | Revoke bans (`/unban`). Includes temp bans and IP bans |
-| `sanctrabans.unmute` | Revoke mutes (`/unmute`) |
-| `sanctrabans.unipmute` | Revoke IP mutes (`/unipmute`; alias behaviour same as unmute for IP mutes) |
-| `sanctrabans.unwarn` | Revoke warnings (`/unwarn`, `/unwarn clear`) |
-| `sanctrabans.unnote` | Revoke notes (`/unnote`, `/unnote clear`) |
+| `sanctrabans.unban` | Revoke bans (`/unban`) and revoke from history/banlist GUI |
+| `sanctrabans.unmute` | Revoke mutes (`/unmute`) and revoke from GUI |
+| `sanctrabans.unipmute` | Revoke IP mutes (`/unipmute`; alias behaviour same as unmute for IP mutes) and revoke from GUI |
+| `sanctrabans.unwarn` | Revoke warnings (`/unwarn`, `/unwarn clear`) and revoke from GUI |
+| `sanctrabans.unnote` | Revoke notes (`/unnote`, `/unnote clear`) and revoke from GUI |
 | `sanctrabans.unpunish` | Revoke any punishment by ID (`/unpunish`) |
+
+### Edit punishments
+
+| Permission | Description |
+|------------|-------------|
+| `sanctrabans.change-reason` | Change reason via command (`/change-reason`) or history/banlist edit GUI |
 
 ### Lookup & list commands
 
@@ -398,7 +430,6 @@ All permissions use the prefix **`sanctrabans.`**. Grant `sanctrabans.all` for f
 | `sanctrabans.check` | Open player check GUI (`/check`) |
 | `sanctrabans.check.uuid` | See UUID on check GUI |
 | `sanctrabans.check.ip` | See IP address on check GUI |
-| `sanctrabans.punish` | Open punish menu (`/punish` and `/ban <player>` alone) |
 
 ### Warns & notes viewing
 
@@ -412,16 +443,6 @@ All permissions use the prefix **`sanctrabans.`**. Grant `sanctrabans.all` for f
 | `sanctrabans.notes.own` | View your own notes |
 | `sanctrabans.notes.other` | View another player's notes |
 | `sanctrabans.notes` | Legacy. Grants full notes access |
-
-### GUI management (edit from history/banlist)
-
-| Permission | Description |
-|------------|-------------|
-| `sanctrabans.gui.punish` | Open punish menu (alternative to `sanctrabans.punish`) |
-| `sanctrabans.gui.revoke` | Revoke punishments from the edit GUI (still requires the matching revoke command permission) |
-| `sanctrabans.gui.change-reason` | Change reason from the edit GUI |
-| `sanctrabans.gui.change-duration` | Change duration from the edit GUI |
-| `sanctrabans.change-reason` | Change reason via command (`/change-reason`) |
 
 ### Alt account permissions
 
@@ -487,8 +508,6 @@ sanctrabans.mute
 sanctrabans.tempmute
 sanctrabans.check
 sanctrabans.history
-sanctrabans.punish
-sanctrabans.gui.punish
 sanctrabans.warns.own
 ```
 
@@ -499,8 +518,7 @@ sanctrabans.tempban
 sanctrabans.unmute
 sanctrabans.unwarn
 sanctrabans.banlist
-sanctrabans.gui.change-reason
-sanctrabans.gui.revoke
+sanctrabans.change-reason
 sanctrabans.notify.kick
 sanctrabans.notify.warn
 sanctrabans.notify.mute
