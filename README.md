@@ -120,8 +120,8 @@ Shows the player's head with status lore:
 | Line | What it shows |
 |------|----------------|
 | **Status** | `Online now`, `Offline (last seen …)`, `Never joined this server`, or `Unknown account` |
-| **UUID** | Real UUID, or `Could not resolve` — requires **`sanctrabans.check.uuid`** (not granted by `check` alone) |
-| **IP** | Live or last-known IP, or `Never connected` / `Hidden` — requires **`sanctrabans.check.ip`** (not granted by `check` alone) |
+| **UUID** | Real UUID, or `Could not resolve`. Requires **`sanctrabans.check.uuid`** (not granted by `check` alone) |
+| **IP** | Live or last-known IP, or `Never connected` / `Hidden`. Requires **`sanctrabans.check.ip`** (not granted by `check` alone) |
 | **Ban / mute / IP mute** | Active punishment state for the account |
 | **Warns & notes** | Counts |
 | **Linked alts** | Names of linked accounts (requires `alts.view`) |
@@ -131,7 +131,7 @@ Without `sanctrabans.check.uuid` or `sanctrabans.check.ip`, those lines show **H
 **Buttons:**
 | Button | Action |
 |--------|--------|
-| Kick | Opens punish menu at kick step — **only when the target is online**; shows a locked barrier when offline or never joined |
+| Kick | Opens punish menu at kick step (**only when the target is online**); shows a locked barrier when offline or never joined |
 | Manage Alts | Opens alt link/unlink GUI |
 | Add Note | Opens punish menu at note step |
 | History | Opens full punishment history |
@@ -448,7 +448,7 @@ Each punishment or revoke permission covers **both commands and GUI**. There are
 | `sanctrabans.history` | Open player history GUI (`/history`) |
 | `sanctrabans.banlist` | Open server banlist GUI (`/banlist`) |
 | `sanctrabans.banlist.search` | Use banlist search (spyglass button / `/banlist <query>`) |
-| `sanctrabans.check` | Open player check GUI (`/check`) — status, punishments, alts; **does not** include UUID or IP |
+| `sanctrabans.check` | Open player check GUI (`/check`): status, punishments, alts; **does not** include UUID or IP |
 | `sanctrabans.check.uuid` | See UUID on check GUI (separate from `check`; included in `all`) |
 | `sanctrabans.check.ip` | See IP address on check GUI (separate from `check`; included in `all`) |
 
@@ -521,7 +521,7 @@ Players in `exempt-players` in `config.yml` are also protected.
 
 ## Suggested permission sets by role
 
-Examples only — adjust to match your server's rank structure and permission plugin.
+Examples only. Adjust to match your server's rank structure and permission plugin.
 
 ### Helper / Trial Mod
 ```
