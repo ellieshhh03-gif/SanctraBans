@@ -16,12 +16,12 @@ GUI-first punishment plugin for Paper 1.21.x with built-in alt detection, IP mut
 |------|----------------|
 | **Ban** | Blocks the account from joining |
 | **Temp Ban** | Blocks joining for a set amount of time |
-| **IP Ban** | Blocks the player's IP from joining |
-| **Temp IP Ban** | Blocks the IP for a set amount of time |
+| **IP Ban** | Blocks the player's IP from joining (by player name or raw IPv4) |
+| **Temp IP Ban** | Blocks the IP for a set amount of time (by player name or raw IPv4) |
 | **Mute** | Blocks chat and configured commands (e.g. `/msg`) |
 | **Temp Mute** | Mutes for a set amount of time |
-| **IP Mute** | Mutes all accounts sharing the IP |
-| **Temp IP Mute** | IP mute for a set amount of time |
+| **IP Mute** | Mutes all accounts sharing the IP (by player name or raw IPv4) |
+| **Temp IP Mute** | IP mute for a set amount of time (by player name or raw IPv4) |
 | **Warn** | Issues a warning (counts toward warn actions) |
 | **Temp Warn** | Warning that lasts for a set amount of time |
 | **Kick** | Removes an online player (not stored long-term) |
@@ -31,7 +31,7 @@ GUI-first punishment plugin for Paper 1.21.x with built-in alt detection, IP mut
 
 | GUI | How to open | What you can do |
 |-----|-------------|-----------------|
-| **Punish menu** | `/punish <player>`, `/ban <player>` (no extra args), or any punish command with only the player name | Step through type → reason → duration → confirm; toggle silent & apply-to-alts. Types you can use match your punishment permissions |
+| **Punish menu** | `/punish <player>` (full flow), or `/ban <player>`, `/tempban <player>`, etc. with only the target | Pick type → reason → duration (temps) → confirm; type-only commands skip straight to the reason step |
 | **Player check** | `/check <player>` | View join status, ban/mute/IP-mute state, warns/notes, linked alts; kick (online only), punish, history, notes, alt management |
 | **History** | `/history <player>` or from check/banlist | Browse all punishments with filters; left-click to edit/revoke |
 | **Banlist** | `/banlist` or `/banlist <search>` | View active punishments server-wide; filter, search, browse pages; left-click to manage, right-click for player history |
@@ -46,11 +46,11 @@ GUI-first punishment plugin for Paper 1.21.x with built-in alt detection, IP mut
 | Command | Purpose |
 |---------|---------|
 | `/ban`, `/tempban`, `/mute`, `/tempmute`, `/warn`, `/tempwarn`, `/kick` | Issue punishments directly |
-| `/banip`, `/tempipban`, `/ipmute`, `/tempipmute` | IP-based punishments |
+| `/banip`, `/tempipban`, `/ipmute`, `/tempipmute` | IP-based punishments (player name or raw IPv4, e.g. `1.2.3.4`) |
 | `/note` | Add a staff note |
 | `/unban`, `/unmute`, `/unipmute`, `/unwarn`, `/unnote` | Revoke active punishments |
 | `/unpunish <id>` | Revoke any stored punishment by database ID |
-| `/change-reason <id> <reason>` | Change a punishment's reason by ID |
+| `/change-reason <id> [reason]` | Change a punishment's reason by ID |
 | `/punish <player>` | Open punish menu |
 | `/history <player>` | Open history GUI |
 | `/banlist [search]` | Open banlist GUI |
@@ -86,13 +86,14 @@ The menu has up to four steps:
 
 #### Step 2: Reason
 - Click a **preset reason** (book items from `reasons.yml`).
+- **No reason** (gray dye): use when there is no specific reason — stored as **`No reason specified`** (change the text via `default-reason` in `config.yml`).
 - Reasons are split across pages automatically: **14 per page**, with Previous/Next when needed.
-- **Specify in chat** (book & quill, above Cancel): type a custom reason in chat.
+- **Specify in chat** (book & quill): type a custom reason.
 - **Cancel** closes the menu.
 
 #### Step 3: Duration (temporary types only)
 - **Escalation item** (repeater): use the suggested next step for this reason/offense (if configured).
-- **Browse layouts:** pick any time layout (only when `independent-time-layouts` is enabled in config).
+- **Browse layouts:** pick any time layout (on by default; set `independent-time-layouts: false` in config to disable).
 - **Duration presets:** click a preset (e.g. `1d`, `7d`, `perma`).
 - Presets use multiple pages like reasons: **14 per page**.
 - **Specify in chat:** type a duration (e.g. `30m`, `2d`, `perma`).
@@ -106,10 +107,10 @@ The menu has up to four steps:
 - **Cancel** aborts.
 - If the target **never joined**, the summary notes that the punishment applies on first login.
 
-**Shortcuts to the punish menu:**
-- `/check <player>` → Punish, Kick, or Add Note buttons
-- `/ban <player>`, `/tempban <player>`, `/mute <player>`, etc. with no other arguments (requires the matching punishment permission)
-- `/punish <player>` (requires at least one punishment permission, e.g. `sanctrabans.ban` or `sanctrabans.mute`)
+**Shortcuts to the punish menu** (players only — console runs the command immediately instead):
+- `/check <player>` → Punish, Kick, or Add Note buttons (kick/note open at reason step with type preset)
+- `/ban <player>`, `/tempban <player>`, `/mute <player>`, `/warn <player>`, `/kick <player>`, `/note <player>`, `/banip <player|IPv4>`, etc. with **no other arguments** open the punish menu at the **reason step** with that command's type already selected (requires the matching punishment permission)
+- `/punish <player>` opens the full menu at the **type picker** (any punishment type you can use)
 
 ---
 
@@ -142,7 +143,8 @@ Without `sanctrabans.check.uuid` or `sanctrabans.check.ip`, those lines show **H
 
 ### History (`/history <player>`)
 
-- Each punishment is shown as the **player's head** with full lore (type, status, reason, staff, dates, ID).
+- Each punishment is shown as the **player's head** with full lore (type, status, reason, staff, dates, **punishment ID**).
+- **Punishment IDs** in history and banlist are the **global database ID** (e.g. `#542`). Use this number with `/unpunish <id>` and `/change-reason <id>`. The warns and notes menus still use per-player numbering (`Warning #1`, `#2`, etc.) for that player only.
 - **Filter** (compass): All, Active, Expired, Bans, Mutes, Warns, Notes.
 - **Previous / Next:** browse through pages of results.
 - **Left-click** a punishment: open **Punishment Edit** (if you have permission to change reason, change duration, or revoke that type).
@@ -151,7 +153,7 @@ Without `sanctrabans.check.uuid` or `sanctrabans.check.ip`, those lines show **H
 
 ### Banlist (`/banlist` or `/banlist <search>`)
 
-- Shows **active** punishments across the server.
+- Shows **active** punishments across the server (same **global database IDs** as history, e.g. `#542`).
 - **Filter:** All, Bans, Mutes, Warns, Recent.
 - **Search** (spyglass): type a player name in chat to search (requires `banlist.search`).
 - **Left-click:** manage punishment (edit menu).
@@ -171,7 +173,7 @@ Available when you have permission for at least one action on that punishment:
 
 | Button | What it does |
 |--------|----------------|
-| Change reason | Pick a preset or type a custom reason |
+| Change reason | Pick a preset, **No reason**, or type in chat |
 | Change duration | Pick a preset or type a new duration (active temp punishments only) |
 | Revoke | Confirm revoke; optional **batch revoke** for all punishments in the same alt batch |
 | Back | Return to the previous menu |
@@ -214,18 +216,38 @@ When a GUI asks you to type in chat:
 /mute <player> [reason]
 /warn <player> [reason]
 /kick <player> [reason]
-/banip <player> [reason]
-/ipmute <player> [reason]
+/banip <player|IPv4> [reason]
+/ipmute <player|IPv4> [reason]
 /note <player> [text]
 ```
+
+Omitting `[reason]` uses the default text **`No reason specified`** (set `default-reason` in `config.yml`).
 
 **Temporary punishments:**
 ```
 /tempban <player> <duration> [reason]
 /tempmute <player> <duration> [reason]
 /tempwarn <player> <duration> [reason]
-/tempipban <player> <duration> [reason]
-/tempipmute <player> <duration> [reason]
+/tempipban <player|IPv4> <duration> [reason]
+/tempipmute <player|IPv4> <duration> [reason]
+```
+
+**IP command targets:** For `/banip`, `/tempipban`, `/ipmute`, and `/tempipmute`, the first argument can be either a **player name** or a **raw IPv4 address** (e.g. `192.168.1.50`).
+
+| Target | How the IP is resolved |
+|--------|----------------------|
+| **Online player** | Uses their current connection IP |
+| **Offline player (name)** | Uses the last-known IP from the plugin cache (player must have joined before) |
+| **Raw IPv4** | Uses that address directly; no Mojang lookup or prior join required |
+
+IP ban/mute types affect **everyone currently on that IP**. Apply-to-alts (`-a`) does not apply to raw IP targets (no linked account UUID).
+
+Examples:
+```
+/banip 203.0.113.42 VPN evasion
+/tempipban 10.0.0.1 7d Alt farming
+/ipmute 192.168.1.50 Spam
+/unban 203.0.113.42
 ```
 
 **Duration format** (commands and chat input):
@@ -249,18 +271,20 @@ When a GUI asks you to type in chat:
 /tempban Player 1d Griefing -a
 ```
 
-**Time layout token** (only when `independent-time-layouts: true` in config):
+**Time layout token** (enabled by default; disable with `independent-time-layouts: false`):
 ```
 /tempban Player #HackingBan Cheating
 ```
 
-**Open GUI instead of punishing:** run any punish command with only the player name:
+**Open GUI instead of punishing:** as a **player**, run a punish command with **only** the target (player name or IPv4 for IP commands). Add any extra argument (duration, reason, `-s`) and the command runs fully in chat instead.
+
 ```
 /ban Player
 /tempban Player
-/mute Player
+/banip 203.0.113.42
 ```
-Requires the matching punishment permission (e.g. `sanctrabans.ban` for `/ban Player`). Staff with any punishment permission can also use `/punish Player`.
+
+Opens the menu at the **reason step** with that type pre-selected. `/punish Player` still opens at the type picker.
 
 ---
 
@@ -278,7 +302,8 @@ Requires the matching punishment permission (e.g. `sanctrabans.ban` for `/ban Pl
 ```
 
 - `-a` on revoke commands also revokes matching active punishments on linked alts (requires `alts.apply`).
-- `/unpunish <id>` revokes any stored punishment by its database ID (shown in history lore).
+- `/unpunish <id>` revokes any stored punishment by its **database ID** (shown as `#542` in history and banlist).
+- `/unban`, `/unmute`, and `/unipmute` accept a **player name or raw IPv4** for IP-related revokes.
 
 ---
 
@@ -286,8 +311,10 @@ Requires the matching punishment permission (e.g. `sanctrabans.ban` for `/ban Pl
 
 **Command:**
 ```
-/change-reason <id> <new reason>
+/change-reason <id> [reason]
 ```
+
+Omitting `[reason]` uses the default (`No reason specified`).
 
 **GUI:** left-click a punishment in history or banlist (requires `sanctrabans.change-reason`). To change duration on an active temp punishment, use the edit menu (requires the matching temp permission, e.g. `sanctrabans.tempban`).
 
@@ -367,7 +394,7 @@ All files live in **`plugins/SanctraBans/`**.
 
 | File | Purpose |
 |------|---------|
-| **`config.yml`** | Main settings: database, exempt players, mute commands, UUID lookup URLs, warn actions, temp-perms duration limits, alt detection, GUI presets (`duration-presets`), debug, prefix, and more |
+| **`config.yml`** | Main settings: database, `default-reason`, `independent-time-layouts`, exempt players, mute commands, warn actions, temp-perms duration limits, alt detection, duration presets, debug, prefix, and more |
 | **`reasons.yml`** | Preset reasons shown as books in the punish menu and edit-reason menu. Add entries here to show new reasons in the GUI |
 | **`escalation.yml`** | Time/duration **layouts** (escalation ladders) and **bindings** that map each reason + punishment type to a layout. Controls auto-escalation in the punish GUI |
 | **`gui.yml`** | Inventory layouts: slot positions for history, banlist, check, punish menu, reason picker, duration picker, filters, buttons, and theme materials |
@@ -380,6 +407,7 @@ All files live in **`plugins/SanctraBans/`**.
 | Goal | Edit this file |
 |------|----------------|
 | Add a punish reason | `reasons.yml` + matching layouts/bindings in `escalation.yml` |
+| Change the "no reason" text | `config.yml` → `default-reason` |
 | Change quick duration buttons | `config.yml` → `gui.duration-presets` |
 | Change GUI colors/materials | `gui.yml` → `theme` and `items` sections |
 | Change chat/broadcast wording | `messages.yml` |
@@ -401,7 +429,7 @@ Each punishment or revoke permission covers **both commands and GUI**. There are
 | `sanctrabans.ban` | `/ban <player> <reason>` | Open punish menu; select Ban |
 | `sanctrabans.tempban` | `/tempban <player> <duration> <reason>` | Open punish menu; select Temp Ban; change temp ban duration in edit menu |
 | `sanctrabans.unban` | `/unban <player>` | Revoke button in history/banlist edit menu |
-| `sanctrabans.change-reason` | `/change-reason <id> <reason>` | Change reason button in edit menu |
+| `sanctrabans.change-reason` | `/change-reason <id> [reason]` | Change reason button in edit menu |
 
 **Opening the punish menu** (`/punish`, `/ban <player>` alone, check menu Punish button): requires at least one punishment-type permission (`ban`, `mute`, `kick`, etc.). Types you lack appear locked in the menu.
 
@@ -413,12 +441,12 @@ Each punishment or revoke permission covers **both commands and GUI**. There are
 |------------|-------------|
 | `sanctrabans.ban` | Permanent ban (`/ban`) and punish menu access for bans |
 | `sanctrabans.tempban` | Temporary ban (`/tempban`) and punish menu access for temp bans |
-| `sanctrabans.ipban` | Permanent IP ban (`/banip`) and punish menu access |
-| `sanctrabans.tempipban` | Temporary IP ban (`/tempipban`) and punish menu access |
+| `sanctrabans.ipban` | Permanent IP ban (`/banip` with player name or IPv4) and punish menu access |
+| `sanctrabans.tempipban` | Temporary IP ban (`/tempipban` with player name or IPv4) and punish menu access |
 | `sanctrabans.mute` | Permanent mute (`/mute`) and punish menu access |
 | `sanctrabans.tempmute` | Temporary mute (`/tempmute`) and punish menu access |
-| `sanctrabans.ipmute` | Permanent IP mute (`/ipmute`) and punish menu access |
-| `sanctrabans.tempipmute` | Temporary IP mute (`/tempipmute`) and punish menu access |
+| `sanctrabans.ipmute` | Permanent IP mute (`/ipmute` with player name or IPv4) and punish menu access |
+| `sanctrabans.tempipmute` | Temporary IP mute (`/tempipmute` with player name or IPv4) and punish menu access |
 | `sanctrabans.warn` | Warn (`/warn`) and punish menu access |
 | `sanctrabans.tempwarn` | Temporary warn (`/tempwarn`) and punish menu access |
 | `sanctrabans.kick` | Kick (`/kick`) and punish menu access |
