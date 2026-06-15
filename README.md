@@ -32,7 +32,7 @@ GUI-first punishment plugin for Paper 1.21.x with built-in alt detection, IP mut
 | GUI | How to open | What you can do |
 |-----|-------------|-----------------|
 | **Punish menu** | `/punish <player>`, `/ban <player>` (no extra args), or any punish command with only the player name | Step through type → reason → duration → confirm; toggle silent & apply-to-alts. Types you can use match your punishment permissions |
-| **Player check** | `/check <player>` | View status, UUID/IP (if allowed), linked alts, kick, add note, open history, open punish menu, manage alts |
+| **Player check** | `/check <player>` | View join status, ban/mute/IP-mute state, warns/notes, linked alts; kick (online only), punish, history, notes, alt management |
 | **History** | `/history <player>` or from check/banlist | Browse all punishments with filters; left-click to edit/revoke |
 | **Banlist** | `/banlist` or `/banlist <search>` | View active punishments server-wide; filter, search, browse pages; left-click to manage, right-click for player history |
 | **Warns** | `/warns` or `/warns <player>` | Multi-page list of warnings |
@@ -68,6 +68,7 @@ GUI-first punishment plugin for Paper 1.21.x with built-in alt detection, IP mut
 - **Duration presets:** Quick-pick durations in the GUI (configured in `config.yml`).
 - **Warn actions:** Automatic commands when warn count hits a threshold (e.g. temp-ban at 3 warns).
 - **Staff duration limits:** `temp-perms` in config cap how long each staff rank can punish (by permission level).
+- **Offline & never-joined players:** `/check`, `/history`, and punish commands resolve names via local cache and Mojang (same as issuing a ban). Never-joined targets show a clear status; punishments apply on first login.
 - **Chat prompts:** Some GUI buttons ask you to type in chat (custom reason, custom duration, banlist search). Type `/cancel` to abort.
 
 ---
@@ -103,6 +104,7 @@ The menu has up to four steps:
 - **Apply to alts toggle:** also punish linked alt accounts (requires `sanctrabans.alts.apply` and linked alts exist).
 - **Confirm** issues the punishment.
 - **Cancel** aborts.
+- If the target **never joined**, the summary notes that the punishment applies on first login.
 
 **Shortcuts to the punish menu:**
 - `/check <player>` → Punish, Kick, or Add Note buttons
@@ -114,15 +116,22 @@ The menu has up to four steps:
 ### Player check (`/check <player>`)
 
 Shows the player's head with status lore:
-- UUID and IP (hidden unless you have `check.uuid` / `check.ip`)
-- Ban / mute / IP mute status
-- Warn and note counts
-- Linked alt names (if `alts.view`)
+
+| Line | What it shows |
+|------|----------------|
+| **Status** | `Online now`, `Offline (last seen …)`, `Never joined this server`, or `Unknown account` |
+| **UUID** | Real UUID, or `Could not resolve` — requires **`sanctrabans.check.uuid`** (not granted by `check` alone) |
+| **IP** | Live or last-known IP, or `Never connected` / `Hidden` — requires **`sanctrabans.check.ip`** (not granted by `check` alone) |
+| **Ban / mute / IP mute** | Active punishment state for the account |
+| **Warns & notes** | Counts |
+| **Linked alts** | Names of linked accounts (requires `alts.view`) |
+
+Without `sanctrabans.check.uuid` or `sanctrabans.check.ip`, those lines show **Hidden** (or unresolved / never connected where applicable). `sanctrabans.check` alone does not include either.
 
 **Buttons:**
 | Button | Action |
 |--------|--------|
-| Kick | Opens punish menu at kick step |
+| Kick | Opens punish menu at kick step — **only when the target is online**; shows a locked barrier when offline or never joined |
 | Manage Alts | Opens alt link/unlink GUI |
 | Add Note | Opens punish menu at note step |
 | History | Opens full punishment history |
@@ -338,6 +347,18 @@ When a player reaches a warn count defined in `warn-actions`, the listed command
 - Default storage is SQLite (`data.db` in the plugin folder).
 - MySQL can be enabled in `config.yml` for multi-server setups.
 
+### Offline and never-joined players
+
+- Punish commands (`/ban`, `/tempban`, etc.) work on players who are offline or have never joined, as long as the name resolves via Mojang.
+- `/check` and `/history` use the same identity lookup, so ban/mute status and history stay accurate for those targets.
+- Invalid names show a friendly error (`Could not find a Minecraft account named …`) instead of a raw engine message.
+
+### IP visibility on `/check`
+
+- The IP shown is the **real connection address** as the server sees it (used for IP bans/mutes and alt auto-linking).
+- Requires **`sanctrabans.check.ip`** to display; otherwise the check GUI shows **Hidden**.
+- On Bungee/Velocity networks, the address depends on IP forwarding being configured correctly on the proxy.
+
 ---
 
 ## 5. Config files (what each one does)
@@ -369,7 +390,7 @@ All files live in **`plugins/SanctraBans/`**.
 
 ## 6. Permissions reference
 
-All permissions use the prefix **`sanctrabans.`**. Grant `sanctrabans.all` for full access (typically admins only).
+All permissions use the prefix **`sanctrabans.`**. Grant `sanctrabans.all` for full access to every node listed below.
 
 ### How permissions work
 
@@ -427,9 +448,9 @@ Each punishment or revoke permission covers **both commands and GUI**. There are
 | `sanctrabans.history` | Open player history GUI (`/history`) |
 | `sanctrabans.banlist` | Open server banlist GUI (`/banlist`) |
 | `sanctrabans.banlist.search` | Use banlist search (spyglass button / `/banlist <query>`) |
-| `sanctrabans.check` | Open player check GUI (`/check`) |
-| `sanctrabans.check.uuid` | See UUID on check GUI |
-| `sanctrabans.check.ip` | See IP address on check GUI |
+| `sanctrabans.check` | Open player check GUI (`/check`) — status, punishments, alts; **does not** include UUID or IP |
+| `sanctrabans.check.uuid` | See UUID on check GUI (separate from `check`; included in `all`) |
+| `sanctrabans.check.ip` | See IP address on check GUI (separate from `check`; included in `all`) |
 
 ### Warns & notes viewing
 
@@ -459,10 +480,10 @@ Each punishment or revoke permission covers **both commands and GUI**. There are
 |------------|-------------|
 | `sanctrabans.silent` | Use silent punishments (`-s` flag and GUI silent toggle) |
 | `sanctrabans.admin` | Admin commands (`/sanctrabans reload`) |
-| `sanctrabans.all` | **All permissions.** Recommended for head admins only |
+| `sanctrabans.all` | **All permissions** (includes every node in this reference) |
 | `sanctrabans.prompt.active` | Internal. Granted while a chat prompt is active (allows `/cancel`) |
 
-### Notification permissions (optional, per rank)
+### Notification permissions (optional)
 
 Staff only receive broadcast messages if they have the matching notify permission. These are **not** listed in `plugin.yml` but work at runtime:
 
@@ -481,7 +502,7 @@ Staff only receive broadcast messages if they have the matching notify permissio
 
 `sanctrabans.all` includes revoke notify access.
 
-### Exemption permissions (optional, per rank)
+### Exemption permissions (optional)
 
 Grant to staff or players who should be immune to a punishment type:
 
@@ -499,6 +520,8 @@ Players in `exempt-players` in `config.yml` are also protected.
 ---
 
 ## Suggested permission sets by role
+
+Examples only — adjust to match your server's rank structure and permission plugin.
 
 ### Helper / Trial Mod
 ```
