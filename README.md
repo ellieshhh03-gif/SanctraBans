@@ -548,6 +548,38 @@ sanctrabans.notify.mute
 sanctrabans.notify.tempmute
 ```
 
+### Senior Moderator
+Add to moderator set:
+```
+sanctrabans.ban
+sanctrabans.tempwarn
+sanctrabans.note
+sanctrabans.unban
+sanctrabans.unnote
+sanctrabans.unpunish
+sanctrabans.silent
+sanctrabans.check.uuid
+sanctrabans.check.ip
+sanctrabans.banlist.search
+sanctrabans.warns.other
+sanctrabans.notes.other
+sanctrabans.alts.view
+sanctrabans.alts.manage
+sanctrabans.alts.link
+sanctrabans.alts.apply
+sanctrabans.notify.tempban
+sanctrabans.notify.ban
+sanctrabans.notify.note
+sanctrabans.notify.revoke
+```
+
+### Admin
+```
+sanctrabans.all
+```
+
+`sanctrabans.all` includes every permission in this reference (punishments, lookup, alts, silent, check UUID/IP, notifications, and `/sanctrabans reload`).
+
 ---
 
 *Moderation through menus, not memory.*
