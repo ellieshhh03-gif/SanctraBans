@@ -147,7 +147,7 @@ Without `sanctrabans.check.uuid` or `sanctrabans.check.ip`, those lines show **H
 - **Punishment IDs** in history and banlist are the **global database ID** (e.g. `#542`). Use this number with `/unpunish <id>` and `/change-reason <id>`. The warns and notes menus still use per-player numbering (`Warning #1`, `#2`, etc.) for that player only.
 - **Filter** (compass): All, Active, Expired, Bans, Mutes, Warns, Notes.
 - **Previous / Next:** browse through pages of results.
-- **Left-click** a punishment: open **Punishment Edit** (if you have permission to change reason, change duration, or revoke that type).
+- **Left-click** a punishment: open **Punishment Edit** (requires `sanctrabans.history` or `sanctrabans.banlist`).
 
 ---
 
@@ -163,13 +163,17 @@ Without `sanctrabans.check.uuid` or `sanctrabans.check.ip`, those lines show **H
 
 ### Punishment edit (from history or banlist)
 
-Available when you have permission for at least one action on that punishment:
+Open by **left-clicking** a punishment in history or banlist. Requires `sanctrabans.history` or `sanctrabans.banlist` — you do **not** need edit permissions to open the menu.
+
+Actions you lack permission for appear as **barrier blocks** with *"You do not have permission for this."* lore. Allowed actions use the normal button icons.
 
 | Action | Permission needed |
 |--------|-------------------|
 | Change reason | `sanctrabans.change-reason` |
-| Change duration | Matching temp permission (e.g. `sanctrabans.tempban` for temp bans) |
+| Change duration | `sanctrabans.change-duration` (all temp types), or a per-type node such as `sanctrabans.change-duration.tempmute` |
 | Revoke | Matching revoke permission (e.g. `sanctrabans.unban` for bans) |
+
+Change duration only appears for **active temporary** punishments (temp ban, temp mute, temp warn, temp IP ban/mute).
 
 | Button | What it does |
 |--------|----------------|
@@ -316,9 +320,9 @@ Opens the menu at the **reason step** with that type pre-selected. `/punish Play
 
 Omitting `[reason]` uses the default (`No reason specified`).
 
-**GUI:** left-click a punishment in history or banlist (requires `sanctrabans.change-reason`). To change duration on an active temp punishment, use the edit menu (requires the matching temp permission, e.g. `sanctrabans.tempban`).
+**GUI:** left-click a punishment in history or banlist (`sanctrabans.history` or `sanctrabans.banlist`). Use **Change reason** in the edit menu (`sanctrabans.change-reason`) or **Change duration** on active temp punishments (`sanctrabans.change-duration`, or e.g. `sanctrabans.change-duration.tempban` for temp bans only). Locked barrier buttons mean you can view the menu but not that action.
 
-Syncs to alt batch punishments when `sync-reason-in-batch` is enabled in config.
+Syncs to alt batch punishments when `sync-reason-in-batch` or `sync-duration-in-batch` is enabled in config.
 
 ---
 
@@ -427,11 +431,15 @@ Each punishment or revoke permission covers **both commands and GUI**. There are
 | Example permission | Command access | GUI access |
 |--------------------|----------------|------------|
 | `sanctrabans.ban` | `/ban <player> <reason>` | Open punish menu; select Ban |
-| `sanctrabans.tempban` | `/tempban <player> <duration> <reason>` | Open punish menu; select Temp Ban; change temp ban duration in edit menu |
+| `sanctrabans.tempban` | `/tempban <player> <duration> <reason>` | Open punish menu; select Temp Ban |
 | `sanctrabans.unban` | `/unban <player>` | Revoke button in history/banlist edit menu |
 | `sanctrabans.change-reason` | `/change-reason <id> [reason]` | Change reason button in edit menu |
+| `sanctrabans.change-duration` | *(GUI only)* | Change duration button in edit menu (all temp types) |
+| `sanctrabans.change-duration.tempmute` | *(GUI only)* | Change duration for temp mutes only |
 
 **Opening the punish menu** (`/punish`, `/ban <player>` alone, check menu Punish button): requires at least one punishment-type permission (`ban`, `mute`, `kick`, etc.). Types you lack appear locked in the menu.
+
+**Opening the punishment edit menu** (left-click in history/banlist): requires `sanctrabans.history` or `sanctrabans.banlist`. Individual edit actions (reason, duration, revoke) use their own permissions; missing permissions show as locked barrier buttons.
 
 `sanctrabans.punish` is an optional legacy alias that opens the punish menu without any specific punishment permission. Most servers should grant individual type permissions instead.
 
@@ -468,6 +476,14 @@ Each punishment or revoke permission covers **both commands and GUI**. There are
 | Permission | Description |
 |------------|-------------|
 | `sanctrabans.change-reason` | Change reason via command (`/change-reason`) or history/banlist edit GUI |
+| `sanctrabans.change-duration` | Change duration on any active temp punishment via edit GUI |
+| `sanctrabans.change-duration.tempban` | Change duration on active temp bans only |
+| `sanctrabans.change-duration.tempmute` | Change duration on active temp mutes only |
+| `sanctrabans.change-duration.tempipban` | Change duration on active temp IP bans only |
+| `sanctrabans.change-duration.tempipmute` | Change duration on active temp IP mutes only |
+| `sanctrabans.change-duration.tempwarn` | Change duration on active temp warnings only |
+
+Per-type `change-duration.*` nodes are optional. Grant `sanctrabans.change-duration` for all temp types, or only the specific nodes you need. Issue permissions (`tempban`, `tempmute`, etc.) do **not** grant duration editing.
 
 ### Lookup & list commands
 
@@ -570,6 +586,7 @@ sanctrabans.unmute
 sanctrabans.unwarn
 sanctrabans.banlist
 sanctrabans.change-reason
+sanctrabans.change-duration
 sanctrabans.notify.kick
 sanctrabans.notify.warn
 sanctrabans.notify.mute
