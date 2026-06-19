@@ -90,7 +90,7 @@ The menu has up to four steps:
 
 #### Step 2: Reason
 - Click a **preset reason** (book items from `reasons.yml`).
-- **No reason** (gray dye): use when there is no specific reason — stored as **`No reason specified`** (change the text via `default-reason` in `config.yml`).
+- **No reason** (gray dye): use when there is no specific reason. Stored as **`No reason specified`** (change the text via `default-reason` in `config.yml`).
 - Reasons are split across pages automatically: **14 per page**, with Previous/Next when needed.
 - **Specify in chat** (book & quill): type a custom reason.
 - **Cancel** closes the menu.
@@ -111,7 +111,7 @@ The menu has up to four steps:
 - **Cancel** aborts.
 - If the target **never joined**, the summary notes that the punishment applies on first login.
 
-**Shortcuts to the punish menu** (players only — console runs the command immediately instead):
+**Shortcuts to the punish menu** (players only; console runs the command immediately instead):
 - `/check <player>` → Punish, Kick, or Add Note buttons (kick/note open at reason step with type preset)
 - `/ban <player>`, `/tempban <player>`, `/mute <player>`, `/warn <player>`, `/kick <player>`, `/note <player>`, `/banip <player|IPv4>`, etc. with **no other arguments** open the punish menu at the **reason step** with that command's type already selected (requires the matching punishment permission)
 - `/punish <player>` opens the full menu at the **type picker** (any punishment type you can use)
@@ -167,7 +167,7 @@ Without `sanctrabans.check.uuid` or `sanctrabans.check.ip`, those lines show **H
 
 ### Punishment edit (from history or banlist)
 
-Open by **left-clicking** a punishment in history or banlist. Requires `sanctrabans.history` or `sanctrabans.banlist` — you do **not** need edit permissions to open the menu.
+Open by **left-clicking** a punishment in history or banlist. Requires `sanctrabans.history` or `sanctrabans.banlist`. You do **not** need edit permissions to open the menu.
 
 Actions you lack permission for appear as **barrier blocks** with *"You do not have permission for this."* lore. Allowed actions use the normal button icons.
 
@@ -360,7 +360,7 @@ Syncs to alt batch punishments when `sync-reason-in-batch` or `sync-duration-in-
 - **Smart config updates:** On startup and reload, SanctraBans merges in changes from the new jar automatically:
   - **New keys** from the jar are added to your config files.
   - **Updated jar defaults** replace your value only if you never customized that key (your value still matches the previous jar default).
-  - **Your custom edits are kept** — if you changed a value away from the old default, it will not be overwritten.
+  - **Your custom edits are kept.** If you changed a value away from the old default, it will not be overwritten.
 - Snapshots of the last jar defaults are stored in `plugins/SanctraBans/.defaults/` (auto-managed; do not edit). This is how the plugin tells the difference between “still on the old default” and “staff customized this”.
 - Back up `plugins/SanctraBans/` before major updates (configs + `data.db`).
 
@@ -400,7 +400,7 @@ When a player reaches a warn count defined in `warn-actions`, the listed command
 
 ### Simple Voice Chat integration
 
-SanctraBans can block **proximity voice chat** for muted players when [Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat) is present. This uses the same mute state as text chat — no separate voice-mute command or database entry.
+SanctraBans can block **proximity voice chat** for muted players when [Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat) is present. This uses the same mute state as text chat. There is no separate voice-mute command or database entry.
 
 **Requirements for voice mutes to work:**
 
@@ -422,8 +422,8 @@ voice-chat-mute:
   notify-cooldown-seconds: 5
 ```
 
-- `enabled` — turn voice mute integration on or off without removing Simple Voice Chat
-- `notify-cooldown-seconds` — how often to show the muted-voice message when a player keeps trying to talk (reduces spam)
+- `enabled`: turn voice mute integration on or off without removing Simple Voice Chat
+- `notify-cooldown-seconds`: how often to show the muted-voice message when a player keeps trying to talk (reduces spam)
 
 **Messages** (`messages.yml` → `mute.blocked-voice` and `mute.blocked-voice-temp`) control what muted players see when voice is blocked.
 
@@ -445,18 +445,7 @@ SanctraBans includes a staff **vanish** command that hides players from others i
 | `sanctrabans.vanish.see` | See vanished players in-world and on the tab list |
 | `sanctrabans.vanish.exempt` | Cannot be vanished by other staff |
 
-**Configuration** (`config.yml`):
-
-```yaml
-vanish:
-  enabled: true
-  override-command: true
-```
-
-- `enabled` — turn the vanish feature on or off
-- `override-command` — when `true`, SanctraBans reclaims `/vanish` after server load so it wins over other plugins that register the same command
-
-If another plugin also uses `/vanish`, you can still run `/sanctrabans:vanish` or set `override-command: false` and use `commands.yml` aliases instead.
+If another plugin also uses `/vanish`, you can still run `/sanctrabans:vanish`.
 
 ---
 
