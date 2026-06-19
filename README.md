@@ -1,6 +1,6 @@
 # SanctraBans
 
-GUI-first punishment plugin for Paper 1.21.x with built-in alt detection, IP mute, and full punishment history. Most staff workflows start with a command that opens a menu. Commands can also be used end-to-end without opening a GUI.
+GUI-first punishment plugin for Paper 1.21.x with built-in alt detection, IP mute, staff vanish, Simple Voice Chat mute support, and full punishment history. Most staff workflows start with a command that opens a menu. Commands can also be used end-to-end without opening a GUI.
 
 **Data folder:** `plugins/SanctraBans/`  
 **Admin command:** `/sanctrabans`  
@@ -18,10 +18,10 @@ GUI-first punishment plugin for Paper 1.21.x with built-in alt detection, IP mut
 | **Temp Ban** | Blocks joining for a set amount of time |
 | **IP Ban** | Blocks the player's IP from joining (by player name or raw IPv4) |
 | **Temp IP Ban** | Blocks the IP for a set amount of time (by player name or raw IPv4) |
-| **Mute** | Blocks chat and configured commands (e.g. `/msg`) |
-| **Temp Mute** | Mutes for a set amount of time |
-| **IP Mute** | Mutes all accounts sharing the IP (by player name or raw IPv4) |
-| **Temp IP Mute** | IP mute for a set amount of time (by player name or raw IPv4) |
+| **Mute** | Blocks chat, configured commands (e.g. `/msg`), and voice chat (when Simple Voice Chat is installed) |
+| **Temp Mute** | Mutes for a set amount of time (includes voice chat when Simple Voice Chat is installed) |
+| **IP Mute** | Mutes all accounts sharing the IP (by player name or raw IPv4; includes voice chat when Simple Voice Chat is installed) |
+| **Temp IP Mute** | IP mute for a set amount of time (by player name or raw IPv4; includes voice chat when Simple Voice Chat is installed) |
 | **Warn** | Issues a warning (counts toward warn actions) |
 | **Temp Warn** | Warning that lasts for a set amount of time |
 | **Kick** | Removes an online player (not stored long-term) |
@@ -57,6 +57,8 @@ GUI-first punishment plugin for Paper 1.21.x with built-in alt detection, IP mut
 | `/check <player>` | Open check GUI |
 | `/warns [player]` | Open warns GUI |
 | `/notes [player]` | Open notes GUI |
+| `/vanish` | Toggle staff vanish on yourself (hidden from tab list and other players) |
+| `/vanish <player>` | Toggle vanish on another online player |
 | `/sanctrabans reload` | Reload configs (admin) |
 | `/cancel` | Cancel an active chat input prompt (while a GUI asked you to type something) |
 
@@ -70,6 +72,8 @@ GUI-first punishment plugin for Paper 1.21.x with built-in alt detection, IP mut
 - **Staff duration limits:** `temp-perms` in config cap how long each staff rank can punish (by permission level).
 - **Offline & never-joined players:** `/check`, `/history`, and punish commands resolve names via local cache and Mojang (same as issuing a ban). Never-joined targets show a clear status; punishments apply on first login.
 - **Chat prompts:** Some GUI buttons ask you to type in chat (custom reason, custom duration, banlist search). Type `/cancel` to abort.
+- **Simple Voice Chat:** When [Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat) is installed on the server, SanctraBans mutes also block proximity voice for muted players. See [Simple Voice Chat integration](#simple-voice-chat-integration) below.
+- **Staff vanish:** `/vanish` fully hides staff from other players (body, armor, tab list). Staff with bypass permission can still see vanished players. See [Staff vanish](#staff-vanish) below.
 
 ---
 
@@ -353,7 +357,11 @@ Syncs to alt batch punishments when `sync-reason-in-batch` or `sync-duration-in-
 ### Config changes on a live server
 
 - Edit files in `plugins/SanctraBans/`, save, then `/sanctrabans reload` or restart.
-- Updating the JAR does **not** overwrite your existing config files. New default keys are merged in automatically.
+- **Smart config updates:** On startup and reload, SanctraBans merges in changes from the new jar automatically:
+  - **New keys** from the jar are added to your config files.
+  - **Updated jar defaults** replace your value only if you never customized that key (your value still matches the previous jar default).
+  - **Your custom edits are kept** — if you changed a value away from the old default, it will not be overwritten.
+- Snapshots of the last jar defaults are stored in `plugins/SanctraBans/.defaults/` (auto-managed; do not edit). This is how the plugin tells the difference between “still on the old default” and “staff customized this”.
 - Back up `plugins/SanctraBans/` before major updates (configs + `data.db`).
 
 ### Exempt players
@@ -390,6 +398,66 @@ When a player reaches a warn count defined in `warn-actions`, the listed command
 - Requires **`sanctrabans.check.ip`** to display; otherwise the check GUI shows **Hidden**.
 - On Bungee/Velocity networks, the address depends on IP forwarding being configured correctly on the proxy.
 
+### Simple Voice Chat integration
+
+SanctraBans can block **proximity voice chat** for muted players when [Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat) is present. This uses the same mute state as text chat — no separate voice-mute command or database entry.
+
+**Requirements for voice mutes to work:**
+
+| Requirement | Who needs it | Why |
+|-------------|--------------|-----|
+| **SanctraBans** | Server | Issues and enforces mutes |
+| **Simple Voice Chat server plugin** | Server | Receives voice packets and exposes the voice chat API |
+| **Simple Voice Chat client mod** | Each player who uses voice | Without the mod, a player cannot use voice chat at all |
+
+Both the **server plugin** and the **player mod** are required for voice mute enforcement. SanctraBans alone is enough for text mutes; voice blocking only applies when a muted player tries to speak through Simple Voice Chat.
+
+**If Simple Voice Chat is not installed on the server**, SanctraBans works normally and the voice hook is skipped. Text mutes and command blocking are unchanged.
+
+**Configuration** (`config.yml`):
+
+```yaml
+voice-chat-mute:
+  enabled: true
+  notify-cooldown-seconds: 5
+```
+
+- `enabled` — turn voice mute integration on or off without removing Simple Voice Chat
+- `notify-cooldown-seconds` — how often to show the muted-voice message when a player keeps trying to talk (reduces spam)
+
+**Messages** (`messages.yml` → `mute.blocked-voice` and `mute.blocked-voice-temp`) control what muted players see when voice is blocked.
+
+**Server setup note:** Simple Voice Chat uses a separate **UDP port** (default `24454`) in addition to your Minecraft port. On hosted panels (e.g. Pterodactyl), you may need an extra allocation and `voice_host` set in `plugins/voicechat/voicechat-server.properties`. See the [Simple Voice Chat wiki](https://modrepo.de/minecraft/voicechat/wiki/troubleshooting) if players see "voice chat not connected".
+
+**Permissions:** SanctraBans does not add a "can speak in voice" permission. Use Simple Voice Chat's own nodes (e.g. `voicechat.speak`) if you manage voice access separately. SanctraBans mute exempt permissions (`sanctrabans.mute.exempt`, etc.) prevent being muted in the first place.
+
+### Staff vanish
+
+SanctraBans includes a staff **vanish** command that hides players from others in-world and on the tab list (armor, held items, and name tag included). Vanish is session-only and clears on disconnect.
+
+| Command | Permission | Description |
+|---------|------------|-------------|
+| `/vanish` | `sanctrabans.vanish` | Toggle vanish on yourself |
+| `/vanish <player>` | `sanctrabans.vanish.others` | Toggle vanish on another online player |
+
+| Permission | Description |
+|------------|-------------|
+| `sanctrabans.vanish.see` | See vanished players in-world and on the tab list |
+| `sanctrabans.vanish.exempt` | Cannot be vanished by other staff |
+
+**Configuration** (`config.yml`):
+
+```yaml
+vanish:
+  enabled: true
+  override-command: true
+```
+
+- `enabled` — turn the vanish feature on or off
+- `override-command` — when `true`, SanctraBans reclaims `/vanish` after server load so it wins over other plugins that register the same command
+
+If another plugin also uses `/vanish`, you can still run `/sanctrabans:vanish` or set `override-command: false` and use `commands.yml` aliases instead.
+
 ---
 
 ## 5. Config files (what each one does)
@@ -398,7 +466,7 @@ All files live in **`plugins/SanctraBans/`**.
 
 | File | Purpose |
 |------|---------|
-| **`config.yml`** | Main settings: database, `default-reason`, `independent-time-layouts`, exempt players, mute commands, warn actions, temp-perms duration limits, alt detection, duration presets, debug, prefix, and more |
+| **`config.yml`** | Main settings: database, `default-reason`, `independent-time-layouts`, exempt players, mute commands, voice-chat-mute, vanish, warn actions, temp-perms duration limits, alt detection, duration presets, debug, prefix, and more |
 | **`reasons.yml`** | Preset reasons shown as books in the punish menu and edit-reason menu. Add entries here to show new reasons in the GUI |
 | **`escalation.yml`** | Time/duration **layouts** (escalation ladders) and **bindings** that map each reason + punishment type to a layout. Controls auto-escalation in the punish GUI |
 | **`gui.yml`** | Inventory layouts: slot positions for history, banlist, check, punish menu, reason picker, duration picker, filters, buttons, and theme materials |
@@ -415,6 +483,7 @@ All files live in **`plugins/SanctraBans/`**.
 | Change quick duration buttons | `config.yml` → `gui.duration-presets` |
 | Change GUI colors/materials | `gui.yml` → `theme` and `items` sections |
 | Change chat/broadcast wording | `messages.yml` |
+| Change voice mute blocked message | `messages.yml` → `mute.blocked-voice` / `mute.blocked-voice-temp` |
 | Change ban screen text | `layouts.yml` |
 | Change how many warns triggers auto-ban | `config.yml` → `warn-actions` |
 
@@ -518,6 +587,15 @@ Per-type `change-duration.*` nodes are optional. Grant `sanctrabans.change-durat
 | `sanctrabans.alts.link` | Manually link and unlink alt accounts |
 | `sanctrabans.alts.apply` | Apply punishments to linked alts (`-a` flag, GUI toggle, batch revoke) |
 
+### Vanish permissions
+
+| Permission | Description |
+|------------|-------------|
+| `sanctrabans.vanish` | Toggle vanish on yourself (`/vanish`) |
+| `sanctrabans.vanish.others` | Toggle vanish on other players (`/vanish <player>`) |
+| `sanctrabans.vanish.see` | See vanished players in-world and on the tab list |
+| `sanctrabans.vanish.exempt` | Cannot be vanished by other staff |
+
 ### Other staff permissions
 
 | Permission | Description |
@@ -557,6 +635,7 @@ Grant to staff or players who should be immune to a punishment type:
 | `sanctrabans.mute.exempt` | Cannot be muted |
 | `sanctrabans.tempmute.exempt` | Cannot be temp-muted |
 | `sanctrabans.warn.exempt` | Cannot be warned |
+| `sanctrabans.vanish.exempt` | Cannot be vanished by other staff |
 | *(same pattern for other types)* | |
 
 Players in `exempt-players` in `config.yml` are also protected.
@@ -587,6 +666,8 @@ sanctrabans.unwarn
 sanctrabans.banlist
 sanctrabans.change-reason
 sanctrabans.change-duration
+sanctrabans.vanish
+sanctrabans.vanish.see
 sanctrabans.notify.kick
 sanctrabans.notify.warn
 sanctrabans.notify.mute
@@ -623,7 +704,7 @@ sanctrabans.notify.revoke
 sanctrabans.all
 ```
 
-`sanctrabans.all` includes every permission in this reference (punishments, lookup, alts, silent, check UUID/IP, notifications, and `/sanctrabans reload`).
+`sanctrabans.all` includes every permission in this reference (punishments, lookup, alts, vanish, silent, check UUID/IP, notifications, `/sanctrabans reload`, and `sanctrabans.vanish.exempt`).
 
 ---
 
