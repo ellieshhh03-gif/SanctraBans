@@ -6,9 +6,21 @@ GUI-first punishment plugin for Paper 1.21.x with built-in alt detection, IP mut
 **Admin command:** `/sanctrabans`  
 **Permission prefix:** `sanctrabans.*`
 
+## Contents
+
+1. [Features overview](#1-features-overview)
+2. [Using the GUI](#2-using-the-gui)
+3. [Commands only (no GUI)](#3-commands-only-no-gui)
+4. [Other important notes](#4-other-important-notes)
+5. [Config files](#5-config-files)
+6. [Permissions reference](#6-permissions-reference)
+7. [Suggested permission sets by role](#7-suggested-permission-sets-by-role)
+
 ---
 
-## 1. Features overview (what staff can do)
+## 1. Features overview
+
+*What staff can do at a glance: punishments, menus, commands, and extras.*
 
 ### Punishment types
 
@@ -27,7 +39,11 @@ GUI-first punishment plugin for Paper 1.21.x with built-in alt detection, IP mut
 | **Kick** | Removes an online player (not stored long-term) |
 | **Note** | Internal staff record; player is not notified |
 
+---
+
 ### GUI features
+
+*In-game menus for issuing and reviewing punishments.*
 
 | GUI | How to open | What you can do |
 |-----|-------------|-----------------|
@@ -41,7 +57,11 @@ GUI-first punishment plugin for Paper 1.21.x with built-in alt detection, IP mut
 | **Alt management** | `/check <player>` → Manage Alts | View linked accounts, manually link/unlink alts |
 | **Duration layout browser** | Punish menu duration step (when enabled) | Pick any configured time layout |
 
+---
+
 ### Command features (no GUI required)
+
+*Run punishments and lookups entirely from chat.*
 
 | Command | Purpose |
 |---------|---------|
@@ -62,7 +82,11 @@ GUI-first punishment plugin for Paper 1.21.x with built-in alt detection, IP mut
 | `/sanctrabans reload` | Reload configs (admin) |
 | `/cancel` | Cancel an active chat input prompt (while a GUI asked you to type something) |
 
-### Extra systems staff should know about
+---
+
+### Extra systems
+
+*Behaviours that apply across multiple commands and menus.*
 
 - **Silent punishments:** `-s` flag on commands or toggle in the punish confirm step. Silent punishments do not broadcast to other staff (unless they have notify permissions).
 - **Alt detection:** Accounts on the same IP can be auto-linked. Staff with permission can apply punishments to linked alts (`-a` / `--alts` on commands, or toggle in GUI).
@@ -78,6 +102,8 @@ GUI-first punishment plugin for Paper 1.21.x with built-in alt detection, IP mut
 ---
 
 ## 2. Using the GUI
+
+*Step-by-step guides for each staff menu.*
 
 ### Punish menu (`/punish <player>`)
 
@@ -120,6 +146,8 @@ The menu has up to four steps:
 
 ### Player check (`/check <player>`)
 
+*One-screen overview of a player before you punish or review history.*
+
 Shows the player's head with status lore:
 
 | Line | What it shows |
@@ -147,6 +175,8 @@ Without `sanctrabans.check.uuid` or `sanctrabans.check.ip`, those lines show **H
 
 ### History (`/history <player>`)
 
+*Full punishment log for one player, with filters and edit access.*
+
 - Each punishment is shown as the **player's head** with full lore (type, status, reason, staff, dates, **punishment ID**).
 - **Punishment IDs** in history and banlist are the **global database ID** (e.g. `#542`). Use this number with `/unpunish <id>` and `/change-reason <id>`. The warns and notes menus still use per-player numbering (`Warning #1`, `#2`, etc.) for that player only.
 - **Filter** (compass): All, Active, Expired, Bans, Mutes, Warns, Notes.
@@ -157,6 +187,8 @@ Without `sanctrabans.check.uuid` or `sanctrabans.check.ip`, those lines show **H
 
 ### Banlist (`/banlist` or `/banlist <search>`)
 
+*Server-wide view of active punishments only.*
+
 - Shows **active** punishments across the server (same **global database IDs** as history, e.g. `#542`).
 - **Filter:** All, Bans, Mutes, Warns, Recent.
 - **Search** (spyglass): type a player name in chat to search (requires `banlist.search`).
@@ -166,6 +198,8 @@ Without `sanctrabans.check.uuid` or `sanctrabans.check.ip`, those lines show **H
 ---
 
 ### Punishment edit (from history or banlist)
+
+*Change reason, duration, or revoke an existing punishment.*
 
 Open by **left-clicking** a punishment in history or banlist. Requires `sanctrabans.history` or `sanctrabans.banlist`. You do **not** need edit permissions to open the menu.
 
@@ -190,6 +224,8 @@ Change duration only appears for **active temporary** punishments (temp ban, tem
 
 ### Warns & notes (`/warns`, `/notes`)
 
+*Browse warnings or internal notes for yourself or another player.*
+
 - Multi-page lists of warnings or notes.
 - `/warns` or `/notes` alone shows **your own** entries (if permitted).
 - `/warns <player>` or `/notes <player>` shows another player's entries.
@@ -197,6 +233,8 @@ Change duration only appears for **active temporary** punishments (temp ban, tem
 ---
 
 ### Alt management (`/check <player>` → Manage Alts)
+
+*View, link, or unlink accounts tied to the same player.*
 
 - View accounts linked to the target.
 - **Link:** type another player name in chat to manually link.
@@ -207,6 +245,8 @@ Change duration only appears for **active temporary** punishments (temp ban, tem
 
 ### Chat prompts
 
+*When a menu asks you to type in chat instead of clicking a button.*
+
 When a GUI asks you to type in chat:
 1. The GUI closes temporarily.
 2. Type your input in chat (reason, duration, search query, etc.).
@@ -216,7 +256,11 @@ When a GUI asks you to type in chat:
 
 ## 3. Commands only (no GUI)
 
+*Issue, revoke, and look up punishments without opening a menu.*
+
 ### Issuing punishments
+
+*Syntax for bans, mutes, warns, kicks, notes, and IP punishments.*
 
 **Permanent punishments:**
 ```
@@ -298,6 +342,8 @@ Opens the menu at the **reason step** with that type pre-selected. `/punish Play
 
 ### Revoking punishments
 
+*Remove active bans, mutes, warns, or notes by player name, IP, or database ID.*
+
 ```
 /unban <player> [-a]
 /unmute <player> [-a]
@@ -317,6 +363,8 @@ Opens the menu at the **reason step** with that type pre-selected. `/punish Play
 
 ### Editing punishments
 
+*Update reason or duration on an existing entry.*
+
 **Command:**
 ```
 /change-reason <id> [reason]
@@ -332,6 +380,8 @@ Syncs to alt batch punishments when `sync-reason-in-batch` or `sync-duration-in-
 
 ### Lookup commands
 
+*Open history, check, banlist, warns, or notes from chat.*
+
 ```
 /history <player>
 /check <player>
@@ -345,6 +395,8 @@ Syncs to alt batch punishments when `sync-reason-in-batch` or `sync-duration-in-
 
 ### Admin
 
+*Plugin maintenance commands.*
+
 ```
 /sanctrabans          - show plugin version
 /sanctrabans reload   - reload all config files
@@ -353,6 +405,8 @@ Syncs to alt batch punishments when `sync-reason-in-batch` or `sync-duration-in-
 ---
 
 ## 4. Other important notes
+
+*Server setup, integrations, and behaviour that is not tied to a single menu.*
 
 ### Config changes on a live server
 
@@ -364,27 +418,39 @@ Syncs to alt batch punishments when `sync-reason-in-batch` or `sync-duration-in-
 - Snapshots of the last jar defaults are stored in `plugins/SanctraBans/.defaults/` (auto-managed; do not edit). This is how the plugin tells the difference between “still on the old default” and “staff customized this”.
 - Back up `plugins/SanctraBans/` before major updates (configs + `data.db`).
 
+---
+
 ### Exempt players
 
 Players listed in `exempt-players` in `config.yml` cannot be punished. Individual exemption permissions also exist (e.g. `sanctrabans.ban.exempt`).
+
+---
 
 ### Staff duration limits
 
 `temp-perms` in `config.yml` maps permission **levels** to max duration in seconds. Staff without a high enough level cannot issue longer temp punishments.
 
+---
+
 ### Warn actions
 
 When a player reaches a warn count defined in `warn-actions`, the listed commands run automatically (e.g. auto temp-ban).
+
+---
 
 ### Notifications
 
 - Non-silent punishments broadcast to online staff with the matching `sanctrabans.notify.<type>` permission (or `sanctrabans.all`).
 - Revokes broadcast to staff with `sanctrabans.notify.revoke` or per-type revoke notify permissions.
 
+---
+
 ### Database
 
 - Default storage is SQLite (`data.db` in the plugin folder).
 - MySQL can be enabled in `config.yml` for multi-server setups.
+
+---
 
 ### Offline and never-joined players
 
@@ -392,13 +458,19 @@ When a player reaches a warn count defined in `warn-actions`, the listed command
 - `/check` and `/history` use the same identity lookup, so ban/mute status and history stay accurate for those targets.
 - Invalid names show a friendly error (`Could not find a Minecraft account named …`) instead of a raw engine message.
 
+---
+
 ### IP visibility on `/check`
 
 - The IP shown is the **real connection address** as the server sees it (used for IP bans/mutes and alt auto-linking).
 - Requires **`sanctrabans.check.ip`** to display; otherwise the check GUI shows **Hidden**.
 - On Bungee/Velocity networks, the address depends on IP forwarding being configured correctly on the proxy.
 
+---
+
 ### Simple Voice Chat integration
+
+*Mute enforcement for proximity voice when Simple Voice Chat is installed.*
 
 SanctraBans can block **proximity voice chat** for muted players when [Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat) is present. This uses the same mute state as text chat. There is no separate voice-mute command or database entry.
 
@@ -431,7 +503,11 @@ voice-chat-mute:
 
 **Permissions:** SanctraBans does not add a "can speak in voice" permission. Use Simple Voice Chat's own nodes (e.g. `voicechat.speak`) if you manage voice access separately. SanctraBans mute exempt permissions (`sanctrabans.mute.exempt`, etc.) prevent being muted in the first place.
 
+---
+
 ### Staff vanish
+
+*Hide staff from other players in-world and on the tab list.*
 
 SanctraBans includes a staff **vanish** command that hides players from others in-world and on the tab list (armor, held items, and name tag included). Vanish is session-only and clears on disconnect.
 
@@ -449,7 +525,9 @@ If another plugin also uses `/vanish`, you can still run `/sanctrabans:vanish`.
 
 ---
 
-## 5. Config files (what each one does)
+## 5. Config files
+
+*What each file in `plugins/SanctraBans/` is for.*
 
 All files live in **`plugins/SanctraBans/`**.
 
@@ -463,7 +541,11 @@ All files live in **`plugins/SanctraBans/`**.
 | **`layouts.yml`** | Screen layouts shown to punished players (ban screen, mute screen, kick screen message lines) |
 | **`data.db`** | SQLite database (created automatically). Stores all punishments, alt links, and escalation progress. Not a YAML file you edit by hand |
 
+---
+
 ### Common customization tasks
+
+*Quick reference for the most common config edits.*
 
 | Goal | Edit this file |
 |------|----------------|
@@ -479,6 +561,8 @@ All files live in **`plugins/SanctraBans/`**.
 ---
 
 ## 6. Permissions reference
+
+*Every `sanctrabans.*` node, grouped by purpose.*
 
 All permissions use the prefix **`sanctrabans.`**. Grant `sanctrabans.all` for full access to every node listed below.
 
@@ -501,6 +585,8 @@ Each punishment or revoke permission covers **both commands and GUI**. There are
 
 `sanctrabans.punish` is an optional legacy alias that opens the punish menu without any specific punishment permission. Most servers should grant individual type permissions instead.
 
+---
+
 ### Punishment types
 
 | Permission | Description |
@@ -518,6 +604,8 @@ Each punishment or revoke permission covers **both commands and GUI**. There are
 | `sanctrabans.kick` | Kick (`/kick`) and punish menu access |
 | `sanctrabans.note` | Add staff notes (`/note`) and punish menu access |
 
+---
+
 ### Revoke commands
 
 | Permission | Description |
@@ -528,6 +616,8 @@ Each punishment or revoke permission covers **both commands and GUI**. There are
 | `sanctrabans.unwarn` | Revoke warnings (`/unwarn`, `/unwarn clear`) and revoke from GUI |
 | `sanctrabans.unnote` | Revoke notes (`/unnote`, `/unnote clear`) and revoke from GUI |
 | `sanctrabans.unpunish` | Revoke any punishment by ID (`/unpunish`) |
+
+---
 
 ### Edit punishments
 
@@ -543,6 +633,8 @@ Each punishment or revoke permission covers **both commands and GUI**. There are
 
 Per-type `change-duration.*` nodes are optional. Grant `sanctrabans.change-duration` for all temp types, or only the specific nodes you need. Issue permissions (`tempban`, `tempmute`, etc.) do **not** grant duration editing.
 
+---
+
 ### Lookup & list commands
 
 | Permission | Description |
@@ -553,6 +645,8 @@ Per-type `change-duration.*` nodes are optional. Grant `sanctrabans.change-durat
 | `sanctrabans.check` | Open player check GUI (`/check`): status, punishments, alts; **does not** include UUID or IP |
 | `sanctrabans.check.uuid` | See UUID on check GUI (separate from `check`; included in `all`) |
 | `sanctrabans.check.ip` | See IP address on check GUI (separate from `check`; included in `all`) |
+
+---
 
 ### Warns & notes viewing
 
@@ -567,6 +661,8 @@ Per-type `change-duration.*` nodes are optional. Grant `sanctrabans.change-durat
 | `sanctrabans.notes.other` | View another player's notes |
 | `sanctrabans.notes` | Legacy. Grants full notes access |
 
+---
+
 ### Alt account permissions
 
 | Permission | Description |
@@ -575,6 +671,8 @@ Per-type `change-duration.*` nodes are optional. Grant `sanctrabans.change-durat
 | `sanctrabans.alts.manage` | Open alt management GUI from `/check` |
 | `sanctrabans.alts.link` | Manually link and unlink alt accounts |
 | `sanctrabans.alts.apply` | Apply punishments to linked alts (`-a` flag, GUI toggle, batch revoke) |
+
+---
 
 ### Vanish permissions
 
@@ -585,6 +683,8 @@ Per-type `change-duration.*` nodes are optional. Grant `sanctrabans.change-durat
 | `sanctrabans.vanish.see` | See vanished players in-world and on the tab list |
 | `sanctrabans.vanish.exempt` | Cannot be vanished by other staff |
 
+---
+
 ### Other staff permissions
 
 | Permission | Description |
@@ -593,6 +693,8 @@ Per-type `change-duration.*` nodes are optional. Grant `sanctrabans.change-durat
 | `sanctrabans.admin` | Admin commands (`/sanctrabans reload`) |
 | `sanctrabans.all` | **All permissions** (includes every node in this reference) |
 | `sanctrabans.prompt.active` | Internal. Granted while a chat prompt is active (allows `/cancel`) |
+
+---
 
 ### Notification permissions (optional)
 
@@ -613,6 +715,8 @@ Staff only receive broadcast messages if they have the matching notify permissio
 
 `sanctrabans.all` includes revoke notify access.
 
+---
+
 ### Exemption permissions (optional)
 
 Grant to staff or players who should be immune to a punishment type:
@@ -631,9 +735,9 @@ Players in `exempt-players` in `config.yml` are also protected.
 
 ---
 
-## Suggested permission sets by role
+## 7. Suggested permission sets by role
 
-Examples only. Adjust to match your server's rank structure and permission plugin.
+*Copy-paste examples for LuckPerms or similar. Adjust to your rank structure.*
 
 ### Helper / Trial Mod
 ```
@@ -646,7 +750,10 @@ sanctrabans.history
 sanctrabans.warns.own
 ```
 
+---
+
 ### Moderator
+
 Add to helper set:
 ```
 sanctrabans.tempban
@@ -663,7 +770,10 @@ sanctrabans.notify.mute
 sanctrabans.notify.tempmute
 ```
 
+---
+
 ### Senior Moderator
+
 Add to moderator set:
 ```
 sanctrabans.ban
@@ -687,6 +797,8 @@ sanctrabans.notify.ban
 sanctrabans.notify.note
 sanctrabans.notify.revoke
 ```
+
+---
 
 ### Admin
 ```
