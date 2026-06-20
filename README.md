@@ -461,14 +461,6 @@ When a player reaches a warn count defined in `warn-actions`, the listed command
 
 ---
 
-### IP visibility on `/check`
-
-- The IP shown is the **real connection address** as the server sees it (used for IP bans/mutes and alt auto-linking).
-- Requires **`sanctrabans.check.ip`** to display; otherwise the check GUI shows **Hidden**.
-- On Bungee/Velocity networks, the address depends on IP forwarding being configured correctly on the proxy.
-
----
-
 ### Simple Voice Chat integration
 
 *Mute enforcement for proximity voice when Simple Voice Chat is installed.*
@@ -510,7 +502,33 @@ voice-chat-mute:
 
 *Hide staff from other players in-world and on the tab list.*
 
-SanctraBans includes a staff **vanish** command that hides players from others in-world and on the tab list. Vanish uses per-viewer visibility (`hidePlayer` / `showPlayer`); staff with see permission can still view vanished players normally. Vanish is session-only and clears on disconnect.
+SanctraBans includes a staff **vanish** command that hides players from others in-world and on the tab list. Vanish uses per-viewer visibility (`hidePlayer` / `showPlayer`); staff with see permission can still view vanished players normally.
+
+**Stealth behavior while vanished:**
+
+| Behavior | What happens |
+|----------|----------------|
+| Item pickup | Blocked — cannot pick up ground items |
+| Flight | Enabled — double-tap jump to fly (survival/adventure; not creative) |
+| Invulnerability | No damage from any source while vanished |
+| Mobs | Ignore you entirely (no targeting; existing targets cleared on vanish) |
+| Storage containers | Silent access — chests, barrels, shulkers, hoppers, dispensers, droppers, and minecart chests/hoppers open **GUI only** (no lid animation, no sound, for anyone). Changes sync back to the real container when you close the GUI |
+| Ender chest | Opens your personal ender chest silently |
+| Redstone / mechanisms | Blocked — pressure plates, buttons, levers, doors, trapdoors, fence gates, bells, note blocks, sculk sensors, farmland trampling, redstone ore glow when walked on, and similar interactions do nothing |
+| Doors / trapdoors / gates | Cannot be opened while vanished — you also **cannot walk through closed doors** until you unvanish |
+
+While vanished, an action bar reminder is shown **only to you** above the hotbar so you do not forget vanish is active. Vanish is session-only and clears on disconnect.
+
+**Config** (`config.yml` → `vanish`):
+
+```yaml
+vanish:
+  mob-ignore: true
+  silent-containers: true
+  block-world-interactions: true
+  flight: true
+  invulnerable: true
+```
 
 | Command | Permission | Description |
 |---------|------------|-------------|
@@ -523,7 +541,7 @@ SanctraBans includes a staff **vanish** command that hides players from others i
 | `sanctrabans.vanish.exempt` | Cannot be vanished by other staff |
 | `sanctrabans.vanish.notify` | Receive staff alerts when someone enters or leaves vanish (`%NAME% went into vanish` / `%NAME% went out of vanish`). Requires this permission **and** at least one of `vanish`, `vanish.others`, or `vanish.see`. The player who toggled vanish and the vanished player do not receive the broadcast. |
 
-Messages for vanish notifications can be edited in `messages.yml` under `vanish.notify-enabled` and `vanish.notify-disabled`.
+Messages for vanish notifications can be edited in `messages.yml` under `vanish.notify-enabled` and `vanish.notify-disabled`. The on-screen vanish reminder text is `vanish.indicator` in `messages.yml`. Toggle or customize it in `config.yml` under `vanish.indicator` (`enabled`, `refresh-interval-ticks`).
 
 If another plugin also uses `/vanish`, you can still run `/sanctrabans:vanish`.
 
