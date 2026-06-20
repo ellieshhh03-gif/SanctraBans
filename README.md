@@ -511,10 +511,13 @@ SanctraBans includes a staff **vanish** command that hides players from others i
 | Item pickup | Blocked: cannot pick up ground items |
 | Flight | Enabled: double-tap jump to fly (survival/adventure; not creative) |
 | Invulnerability | No damage from any source while vanished |
+| Hunger | Frozen in survival: food level, saturation, and exhaustion do not change while vanished (`freeze-hunger`) |
 | Mobs | Ignore you entirely (no targeting; existing targets cleared on vanish) |
 | Storage containers | Silent access: chests, barrels, shulkers, hoppers, dispensers, droppers, and minecart chests/hoppers open **GUI only** (no lid animation, no sound, for anyone). Changes sync back to the real container when you close the GUI |
 | Ender chest | Opens your personal ender chest silently |
-| Redstone / mechanisms | Blocked: pressure plates, buttons, levers, doors, trapdoors, fence gates, bells, note blocks, sculk sensors, farmland trampling, redstone ore glow when walked on, and similar interactions do nothing |
+| Redstone / mechanisms | Blocked: pressure plates, buttons, levers, doors, trapdoors, fence gates, bells, note blocks, sculk sensors, farmland trampling, redstone ore glow (single and multi block change packets), and similar interactions do nothing (vanished staff stay sneaking for step-on blocks like redstone ore) |
+| Sounds and particles | All sounds and particles near vanished players are suppressed for everyone nearby (entity sounds, positional sounds, and particles; PacketEvents is bundled; an external PacketEvents plugin is used when installed). Config key `suppress-splash` controls this |
+| Tab list | Vanished staff are stripped from tab list packets sent to players without see permission (`hide-tab-list`; complements Bukkit `hidePlayer`) |
 | Doors / trapdoors / gates | Cannot be opened while vanished. You also **cannot walk through closed doors** until you unvanish |
 
 While vanished, an action bar reminder is shown **only to you** above the hotbar so you do not forget vanish is active. Vanish is session-only and clears on disconnect.
@@ -523,11 +526,19 @@ While vanished, an action bar reminder is shown **only to you** above the hotbar
 
 ```yaml
 vanish:
+  enabled: true
+  override-command: true
   mob-ignore: true
   silent-containers: true
   block-world-interactions: true
   flight: true
   invulnerable: true
+  freeze-hunger: true
+  suppress-splash: true
+  hide-tab-list: true
+  indicator:
+    enabled: true
+    refresh-interval-ticks: 20
 ```
 
 | Command | Permission | Description |
@@ -543,7 +554,7 @@ vanish:
 
 Messages for vanish notifications can be edited in `messages.yml` under `vanish.notify-enabled` and `vanish.notify-disabled`. The on-screen vanish reminder text is `vanish.indicator` in `messages.yml`. Toggle or customize it in `config.yml` under `vanish.indicator` (`enabled`, `refresh-interval-ticks`).
 
-If another plugin also uses `/vanish`, you can still run `/sanctrabans:vanish`.
+If another plugin also uses `/vanish`, set `override-command: true` (default) so SanctraBans re-registers `/vanish` after all plugins load. You can also run `/sanctrabans:vanish` explicitly.
 
 ---
 
