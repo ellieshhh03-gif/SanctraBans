@@ -97,7 +97,7 @@ GUI-first punishment plugin for Paper 1.21.x with built-in alt detection, IP mut
 - **Offline & never-joined players:** `/check`, `/history`, and punish commands resolve names via local cache and Mojang (same as issuing a ban). Never-joined targets show a clear status; punishments apply on first login.
 - **Chat prompts:** Some GUI buttons ask you to type in chat (custom reason, custom duration, banlist search). Type `/cancel` to abort.
 - **Simple Voice Chat:** When [Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat) is installed on the server, SanctraBans mutes also block proximity voice for muted players. See [Simple Voice Chat integration](#simple-voice-chat-integration) below.
-- **Staff vanish:** `/vanish` fully hides staff from other players (body, armor, tab list). Staff with bypass permission can still see vanished players. See [Staff vanish](#staff-vanish) below.
+- **Staff vanish:** `/vanish` hides staff from other players (tab list and in-world). Staff with bypass permission can still see vanished players. Staff with notify permission get alerts when others toggle vanish. See [Staff vanish](#staff-vanish) below.
 
 ---
 
@@ -442,6 +442,7 @@ When a player reaches a warn count defined in `warn-actions`, the listed command
 
 - Non-silent punishments broadcast to online staff with the matching `sanctrabans.notify.<type>` permission (or `sanctrabans.all`).
 - Revokes broadcast to staff with `sanctrabans.notify.revoke` or per-type revoke notify permissions.
+- Vanish toggles broadcast to online staff with `sanctrabans.vanish.notify` who also hold at least one vanish staff permission (`vanish`, `vanish.others`, or `vanish.see`). See [Staff vanish](#staff-vanish).
 
 ---
 
@@ -509,7 +510,7 @@ voice-chat-mute:
 
 *Hide staff from other players in-world and on the tab list.*
 
-SanctraBans includes a staff **vanish** command that hides players from others in-world and on the tab list (armor, held items, and name tag included). Vanish is session-only and clears on disconnect.
+SanctraBans includes a staff **vanish** command that hides players from others in-world and on the tab list. Vanish uses per-viewer visibility (`hidePlayer` / `showPlayer`); staff with see permission can still view vanished players normally. Vanish is session-only and clears on disconnect.
 
 | Command | Permission | Description |
 |---------|------------|-------------|
@@ -520,6 +521,9 @@ SanctraBans includes a staff **vanish** command that hides players from others i
 |------------|-------------|
 | `sanctrabans.vanish.see` | See vanished players in-world and on the tab list |
 | `sanctrabans.vanish.exempt` | Cannot be vanished by other staff |
+| `sanctrabans.vanish.notify` | Receive staff alerts when someone enters or leaves vanish (`%NAME% went into vanish` / `%NAME% went out of vanish`). Requires this permission **and** at least one of `vanish`, `vanish.others`, or `vanish.see`. The player who toggled vanish and the vanished player do not receive the broadcast. |
+
+Messages for vanish notifications can be edited in `messages.yml` under `vanish.notify-enabled` and `vanish.notify-disabled`.
 
 If another plugin also uses `/vanish`, you can still run `/sanctrabans:vanish`.
 
@@ -682,6 +686,7 @@ Per-type `change-duration.*` nodes are optional. Grant `sanctrabans.change-durat
 | `sanctrabans.vanish.others` | Toggle vanish on other players (`/vanish <player>`) |
 | `sanctrabans.vanish.see` | See vanished players in-world and on the tab list |
 | `sanctrabans.vanish.exempt` | Cannot be vanished by other staff |
+| `sanctrabans.vanish.notify` | Receive staff alerts when someone enters or leaves vanish. Requires this permission **and** at least one of `vanish`, `vanish.others`, or `vanish.see` |
 
 ---
 
@@ -712,8 +717,9 @@ Staff only receive broadcast messages if they have the matching notify permissio
 | *(same pattern for `ipban`, `tempipban`, `ipmute`, `tempipmute`, `tempwarn`)* | |
 | `sanctrabans.notify.revoke` | All revoke broadcast notifications |
 | `sanctrabans.notify.revoke.<type>` | Revoke broadcast for a specific type only |
+| `sanctrabans.vanish.notify` | Vanish enter/leave alerts (see [Vanish permissions](#vanish-permissions); also requires a vanish staff permission) |
 
-`sanctrabans.all` includes revoke notify access.
+`sanctrabans.all` includes revoke notify access and `sanctrabans.vanish.notify`.
 
 ---
 
@@ -764,6 +770,7 @@ sanctrabans.change-reason
 sanctrabans.change-duration
 sanctrabans.vanish
 sanctrabans.vanish.see
+sanctrabans.vanish.notify
 sanctrabans.notify.kick
 sanctrabans.notify.warn
 sanctrabans.notify.mute
@@ -805,7 +812,7 @@ sanctrabans.notify.revoke
 sanctrabans.all
 ```
 
-`sanctrabans.all` includes every permission in this reference (punishments, lookup, alts, vanish, silent, check UUID/IP, notifications, `/sanctrabans reload`, and `sanctrabans.vanish.exempt`).
+`sanctrabans.all` includes every permission in this reference (punishments, lookup, alts, vanish, vanish notify, silent, check UUID/IP, notifications, `/sanctrabans reload`, and `sanctrabans.vanish.exempt`).
 
 ---
 
