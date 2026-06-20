@@ -508,14 +508,14 @@ SanctraBans includes a staff **vanish** command that hides players from others i
 
 | Behavior | What happens |
 |----------|----------------|
-| Item pickup | Blocked — cannot pick up ground items |
-| Flight | Enabled — double-tap jump to fly (survival/adventure; not creative) |
+| Item pickup | Blocked: cannot pick up ground items |
+| Flight | Enabled: double-tap jump to fly (survival/adventure; not creative) |
 | Invulnerability | No damage from any source while vanished |
 | Mobs | Ignore you entirely (no targeting; existing targets cleared on vanish) |
-| Storage containers | Silent access — chests, barrels, shulkers, hoppers, dispensers, droppers, and minecart chests/hoppers open **GUI only** (no lid animation, no sound, for anyone). Changes sync back to the real container when you close the GUI |
+| Storage containers | Silent access: chests, barrels, shulkers, hoppers, dispensers, droppers, and minecart chests/hoppers open **GUI only** (no lid animation, no sound, for anyone). Changes sync back to the real container when you close the GUI |
 | Ender chest | Opens your personal ender chest silently |
-| Redstone / mechanisms | Blocked — pressure plates, buttons, levers, doors, trapdoors, fence gates, bells, note blocks, sculk sensors, farmland trampling, redstone ore glow when walked on, and similar interactions do nothing |
-| Doors / trapdoors / gates | Cannot be opened while vanished — you also **cannot walk through closed doors** until you unvanish |
+| Redstone / mechanisms | Blocked: pressure plates, buttons, levers, doors, trapdoors, fence gates, bells, note blocks, sculk sensors, farmland trampling, redstone ore glow when walked on, and similar interactions do nothing |
+| Doors / trapdoors / gates | Cannot be opened while vanished. You also **cannot walk through closed doors** until you unvanish |
 
 While vanished, an action bar reminder is shown **only to you** above the hotbar so you do not forget vanish is active. Vanish is session-only and clears on disconnect.
 
