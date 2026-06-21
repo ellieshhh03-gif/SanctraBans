@@ -1,6 +1,6 @@
 # SanctraBans
 
-GUI-first punishment plugin for Paper 1.21.x with built-in alt detection, IP mute, staff vanish, Simple Voice Chat mute support, and full punishment history. Most staff workflows start with a command that opens a menu. Commands can also be used end-to-end without opening a GUI.
+GUI-first punishment plugin for Paper 1.21.x with built-in IP-based alt detection, Bedrock/Geyser/Floodgate platform support, IP mute, staff vanish, Simple Voice Chat mute support, and full punishment history. Most staff workflows start with a command that opens a menu. Commands can also be used end-to-end without opening a GUI.
 
 **Data folder:** `plugins/SanctraBans/`  
 **Admin command:** `/sanctrabans`  
@@ -89,7 +89,8 @@ GUI-first punishment plugin for Paper 1.21.x with built-in alt detection, IP mut
 *Behaviours that apply across multiple commands and menus.*
 
 - **Silent punishments:** `-s` flag on commands or toggle in the punish confirm step. Silent punishments do not broadcast to other staff (unless they have notify permissions).
-- **Alt detection:** Accounts on the same IP can be auto-linked. Staff with permission can apply punishments to linked alts (`-a` / `--alts` on commands, or toggle in GUI).
+- **Alt detection:** Accounts that have ever shared an IP are auto-linked on join. Linking is **IP-only** (never username-based), so it works on premium, cracked, and mixed servers without false-linking unrelated players who happen to share a name. Staff with permission can apply punishments to linked alts (`-a` / `--alts` on commands, or toggle in GUI). See [Alt detection](#alt-detection) below.
+- **Bedrock / Geyser / Floodgate:** When Floodgate is installed, Bedrock players are tagged on join and staff menus show **Platform: Java**, **Bedrock**, or **Unknown** (with a note that it is decided on next join). See [Bedrock / Geyser / Floodgate](#bedrock--geyser--floodgate) below.
 - **Escalation layouts:** Repeat offenses for the same reason can auto-suggest the next duration step (configured in `escalation.yml`).
 - **Duration presets:** Quick-pick durations in the GUI (configured in `config.yml`).
 - **Warn actions:** Automatic commands when warn count hits a threshold (e.g. temp-ban at 3 warns).
@@ -153,6 +154,7 @@ Shows the player's head with status lore:
 | Line | What it shows |
 |------|----------------|
 | **Status** | `Online now`, `Offline (last seen …)`, `Never joined this server`, or `Unknown account` |
+| **Platform** | `Java`, `Bedrock`, or `Unknown` (with a hint that unknown is decided on next join). Requires Floodgate for Bedrock detection; see [Bedrock / Geyser / Floodgate](#bedrock--geyser--floodgate) |
 | **UUID** | Real UUID, or `Could not resolve`. Requires **`sanctrabans.check.uuid`** (not granted by `check` alone) |
 | **IP** | Live or last-known IP, or `Never connected` / `Hidden`. Requires **`sanctrabans.check.ip`** (not granted by `check` alone) |
 | **Ban / mute / IP mute** | Active punishment state for the account |
@@ -178,6 +180,7 @@ Without `sanctrabans.check.uuid` or `sanctrabans.check.ip`, those lines show **H
 *Full punishment log for one player, with filters and edit access.*
 
 - Each punishment is shown as the **player's head** with full lore (type, status, reason, staff, dates, **punishment ID**).
+- **Platform** (Java / Bedrock / Unknown) is shown on the player head when viewing one player's history.
 - **Punishment IDs** in history and banlist are the **global database ID** (e.g. `#542`). Use this number with `/unpunish <id>` and `/change-reason <id>`. The warns and notes menus still use per-player numbering (`Warning #1`, `#2`, etc.) for that player only.
 - **Filter** (compass): All, Active, Expired, Bans, Mutes, Warns, Notes.
 - **Previous / Next:** browse through pages of results.
@@ -190,6 +193,7 @@ Without `sanctrabans.check.uuid` or `sanctrabans.check.ip`, those lines show **H
 *Server-wide view of active punishments only.*
 
 - Shows **active** punishments across the server (same **global database IDs** as history, e.g. `#542`).
+- **Platform** (Java / Bedrock / Unknown) is shown on each entry's player head.
 - **Filter:** All, Bans, Mutes, Warns, Recent.
 - **Search** (spyglass): type a player name in chat to search (requires `banlist.search`).
 - **Left-click:** manage punishment (edit menu).
@@ -236,9 +240,10 @@ Change duration only appears for **active temporary** punishments (temp ban, tem
 
 *View, link, or unlink accounts tied to the same player.*
 
-- View accounts linked to the target.
+- View accounts linked to the target (auto-linked by shared IP history, or manually linked by staff).
+- Each linked account shows its **platform** (Java / Bedrock / Unknown).
 - **Link:** type another player name in chat to manually link.
-- **Unlink:** confirm removal of a link.
+- **Unlink:** confirm removal of a link. If the accounts share an IP again on a later join, they may be **auto-linked again** (unless that IP is ignored or over the shared-IP cap).
 - Requires `sanctrabans.alts.manage` and `sanctrabans.alts.link`.
 
 ---
@@ -450,12 +455,107 @@ When a player reaches a warn count defined in `warn-actions`, the listed command
 
 - Default storage is SQLite (`data.db` in the plugin folder).
 - MySQL can be enabled in `config.yml` for multi-server setups.
+- Alt links and **IP history** (all IPs ever seen per account) are stored in the database and migrate automatically on plugin update.
+
+---
+
+### Alt detection
+
+*How accounts are linked, and how to tune it for your server type.*
+
+SanctraBans links alternate accounts when they have **ever connected from the same IP address**. Linking is **purely IP-based**. Usernames are never used to decide links. That means:
+
+- **Premium servers:** different UUIDs on the same IP (e.g. siblings, alts) are linked correctly.
+- **Cracked / offline servers:** offline UUIDs are linked by IP like any other account.
+- **Mixed servers (cracked + premium):** the same person's premium UUID and cracked UUID can both link to each other when they share an IP, without false-linking two unrelated players who happen to use the same name.
+
+**On each join**, the plugin records the player's UUID, name, IP, and (when Floodgate is present) platform. If auto-linking is enabled, it looks up **all accounts that have ever used any of this player's IPs** (not just the current IP) and creates `auto_ip` links.
+
+**Manual links** (`/check` → Manage Alts → Link) are stored separately and can be removed with Unlink. Unlinking does not block future auto-links: if both accounts join again from a shared IP, they may be re-linked automatically.
+
+**False-positive protection:**
+
+| Setting | Purpose |
+|---------|---------|
+| `ignored-ips` | IPs that are never recorded or linked (default: `127.0.0.1`, `::1`). Add your proxy/backend IP if players appear to share one address. |
+| `max-shared-ip-accounts` | Skip **auto-linking** on an IP once more than this many distinct accounts have used it. IP history is still recorded; only automatic linking is skipped. Default: `0` (disabled, no limit). Set e.g. `10` on busy networks to reduce VPN/CGNAT false positives. |
+
+**Configuration** (`config.yml` → `alt-detection`):
+
+```yaml
+alt-detection:
+  enabled: true
+  auto-link-ip: true
+  record-ip-history: true
+  ignored-ips:
+    - 127.0.0.1
+    - '::1'
+  max-shared-ip-accounts: 0
+  apply-to-alts-default: false
+  sync-reason-in-batch: true
+  sync-duration-in-batch: true
+```
+
+| Key | Description |
+|-----|-------------|
+| `enabled` | Master toggle for alt detection features |
+| `auto-link-ip` | Auto-link on join when IPs match in history |
+| `record-ip-history` | Store UUID/name/IP and full IP history on join. Needed for `/check`, IP punishments, and historical linking. Turn off only if you do not want IPs stored at all |
+| `ignored-ips` | Never record or link these IPs |
+| `max-shared-ip-accounts` | VPN/CGNAT/proxy protection for auto-linking. `0` = no limit (default) |
+| `apply-to-alts-default` | Default state of the "apply to alts" toggle in the punish GUI |
+| `sync-reason-in-batch` / `sync-duration-in-batch` | Keep alt batch punishments in sync when editing reason or duration |
+
+**Staff workflow:** Linked alts appear on `/check` (with `alts.view`), in the alt management GUI, and can receive the same punishment with `-a` / `--alts` or the GUI toggle (requires `alts.apply`). Punishments propagate to linked accounts even when names match (e.g. premium vs cracked versions of the same player).
+
+---
+
+### Bedrock / Geyser / Floodgate
+
+*Bedrock player detection and platform labels in staff menus.*
+
+SanctraBans integrates with **[Floodgate](https://geysermc.org/wiki/floodgate/)** (used alongside Geyser) as an optional soft dependency. **Geyser alone is not required** for SanctraBans; only Floodgate's API is used for Bedrock detection. If Floodgate is not installed, the plugin behaves as before (all players treated as Java; no errors).
+
+**What it does when Floodgate is present:**
+
+| Feature | Behaviour |
+|---------|-----------|
+| **Join tagging** | Each join is recorded as **Java** or **Bedrock** in `ip_cache` |
+| **Platform in menus** | Check, alt management, banlist, and history show **Platform: Java**, **Bedrock**, or **Unknown** on the player head |
+| **Unknown platform** | Accounts that joined before this feature, or with no stored platform, show **Unknown** plus *"Determined the next time this player joins"* |
+| **Never-joined Bedrock names** | Punishing or checking a Bedrock-prefixed name that has **never joined** will not fabricate a false offline/Mojang UUID (Bedrock UUIDs are XUID-based and cannot be guessed from the name). Once the player joins once, they resolve normally from cache |
+
+**Requirements:**
+
+| Component | Required? |
+|-----------|-----------|
+| **Floodgate plugin** on the backend | Yes, for Bedrock detection |
+| **Geyser** | Typical setup (Bedrock clients connect through Geyser → Floodgate on backend) |
+| Floodgate bundled in SanctraBans jar | No, compile-time API only; Floodgate must be on the server |
+
+**Configuration** (`config.yml` → `bedrock`):
+
+```yaml
+bedrock:
+  enabled: true
+  prefix-override: ''
+```
+
+| Key | Description |
+|-----|-------------|
+| `enabled` | Turn Bedrock detection and platform display on or off |
+| `prefix-override` | Override Floodgate's username prefix (e.g. `.`). Leave blank to use Floodgate's live configured prefix (recommended) |
+
+**Messages** (`messages.yml` → `platform.*`): customize the Java, Bedrock, Unknown, and unknown-hint lines shown in menus.
+
+**Soft dependencies** (in `plugin.yml`): `Geyser-Spigot`, `floodgate`.
 
 ---
 
 ### Offline and never-joined players
 
-- Punish commands (`/ban`, `/tempban`, etc.) work on players who are offline or have never joined, as long as the name resolves via Mojang.
+- Punish commands (`/ban`, `/tempban`, etc.) work on players who are offline or have never joined, as long as the name resolves via Mojang or local cache.
+- **Bedrock-prefixed names** (Floodgate prefix, e.g. `.PlayerName`) that have **never joined** cannot be resolved to a UUID until their first login. Staff will see unresolved/unknown account status instead of a wrong UUID.
 - `/check` and `/history` use the same identity lookup, so ban/mute status and history stay accurate for those targets.
 - Invalid names show a friendly error (`Could not find a Minecraft account named …`) instead of a raw engine message.
 
@@ -513,9 +613,9 @@ SanctraBans includes a staff **vanish** command that hides players from others i
 | Invulnerability | No damage from any source while vanished |
 | Hunger | Frozen in survival: food level, saturation, and exhaustion do not change while vanished (`freeze-hunger`) |
 | Mobs | Ignore you entirely (no targeting; existing targets cleared on vanish) |
-| Storage containers | Silent access: chests, barrels, shulkers, hoppers, dispensers, droppers, and minecart chests/hoppers open **GUI only** (no lid animation, no sound, for anyone). Changes sync back to the real container when you close the GUI |
+| Storage containers | Silent access: opens the **real** container GUI (hopper, brewing stand, furnace, chest, barrel, shulker, dispenser, dropper, minecart chests/hoppers, etc.). Lid animation and open sounds are suppressed for players without see-vanished permission via PacketEvents |
 | Ender chest | Opens your personal ender chest silently |
-| Redstone / mechanisms | Blocked: pressure plates, buttons, levers, doors, trapdoors, fence gates, bells, note blocks, sculk sensors, farmland trampling, redstone ore glow (single and multi block change packets), and similar interactions do nothing (vanished staff stay sneaking for step-on blocks like redstone ore) |
+| Redstone / mechanisms | Blocked: pressure plates, buttons, levers, doors, trapdoors, fence gates, bells, note blocks, sculk sensors, farmland trampling, redstone ore glow (single and multi block change packets), and similar interactions do nothing |
 | Sounds and particles | All sounds and particles near vanished players are suppressed for everyone nearby (entity sounds, positional sounds, and particles; PacketEvents is bundled; an external PacketEvents plugin is used when installed). Config key `suppress-splash` controls this |
 | Tab list | Vanished staff are stripped from tab list packets sent to players without see permission (`hide-tab-list`; complements Bukkit `hidePlayer`) |
 | Doors / trapdoors / gates | Cannot be opened while vanished. You also **cannot walk through closed doors** until you unvanish |
@@ -566,13 +666,13 @@ All files live in **`plugins/SanctraBans/`**.
 
 | File | Purpose |
 |------|---------|
-| **`config.yml`** | Main settings: database, `default-reason`, `independent-time-layouts`, exempt players, mute commands, voice-chat-mute, vanish, warn actions, temp-perms duration limits, alt detection, duration presets, debug, prefix, and more |
+| **`config.yml`** | Main settings: database, `default-reason`, `independent-time-layouts`, exempt players, mute commands, voice-chat-mute, vanish, warn actions, temp-perms duration limits, **alt detection**, **bedrock**, duration presets, debug, prefix, and more |
 | **`reasons.yml`** | Preset reasons shown as books in the punish menu and edit-reason menu. Add entries here to show new reasons in the GUI |
 | **`escalation.yml`** | Time/duration **layouts** (escalation ladders) and **bindings** that map each reason + punishment type to a layout. Controls auto-escalation in the punish GUI |
 | **`gui.yml`** | Inventory layouts: slot positions for history, banlist, check, punish menu, reason picker, duration picker, filters, buttons, and theme materials |
 | **`messages.yml`** | All in-game text: chat messages, GUI button labels, ban screen text references, broadcast templates |
 | **`layouts.yml`** | Screen layouts shown to punished players (ban screen, mute screen, kick screen message lines) |
-| **`data.db`** | SQLite database (created automatically). Stores all punishments, alt links, and escalation progress. Not a YAML file you edit by hand |
+| **`data.db`** | SQLite database (created automatically). Stores all punishments, alt links, IP cache, **IP history**, and escalation progress. Not a YAML file you edit by hand |
 
 ---
 
@@ -590,6 +690,9 @@ All files live in **`plugins/SanctraBans/`**.
 | Change voice mute blocked message | `messages.yml` → `mute.blocked-voice` / `mute.blocked-voice-temp` |
 | Change ban screen text | `layouts.yml` |
 | Change how many warns triggers auto-ban | `config.yml` → `warn-actions` |
+| Tune alt auto-linking (ignored IPs, shared-IP cap) | `config.yml` → `alt-detection` |
+| Enable/disable Bedrock platform tags | `config.yml` → `bedrock` |
+| Change platform labels in menus | `messages.yml` → `platform.*` |
 
 ---
 
@@ -703,7 +806,7 @@ Per-type `change-duration.*` nodes are optional. Grant `sanctrabans.change-durat
 | `sanctrabans.alts.view` | See linked alts on `/check` |
 | `sanctrabans.alts.manage` | Open alt management GUI from `/check` |
 | `sanctrabans.alts.link` | Manually link and unlink alt accounts |
-| `sanctrabans.alts.apply` | Apply punishments to linked alts (`-a` flag, GUI toggle, batch revoke) |
+| `sanctrabans.alts.apply` | Apply punishments to linked alts (`-a` flag, GUI toggle, batch revoke). Links are IP-based (see [Alt detection](#alt-detection)) |
 
 ---
 
