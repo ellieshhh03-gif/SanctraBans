@@ -455,7 +455,7 @@ When a player reaches a warn count defined in `warn-actions`, the listed command
 
 - Default storage is SQLite (`data.db` in the plugin folder).
 - MySQL can be enabled in `config.yml` for multi-server setups.
-- Alt links and **IP history** (all IPs ever seen per account) are stored in the database and migrate automatically on plugin update.
+- Alt links, the last-known IP per account, and IP history are stored in the database and migrate automatically on plugin update.
 
 ---
 
@@ -463,22 +463,22 @@ When a player reaches a warn count defined in `warn-actions`, the listed command
 
 *How accounts are linked, and how to tune it for your server type.*
 
-SanctraBans links alternate accounts when they have **ever connected from the same IP address**. Linking is **purely IP-based**. Usernames are never used to decide links. That means:
+SanctraBans links alternate accounts when they **currently share the same IP address** (their last-known address). Linking is **purely IP-based**. Usernames are never used to decide links. That means:
 
 - **Premium servers:** different UUIDs on the same IP (e.g. siblings, alts) are linked correctly.
 - **Cracked / offline servers:** offline UUIDs are linked by IP like any other account.
 - **Mixed servers (cracked + premium):** the same person's premium UUID and cracked UUID can both link to each other when they share an IP, without false-linking two unrelated players who happen to use the same name.
 
-**On each join**, the plugin records the player's UUID, name, IP, and (when Floodgate is present) platform. If auto-linking is enabled, it looks up **all accounts that have ever used any of this player's IPs** (not just the current IP) and creates `auto_ip` links.
+**On each join**, the plugin records the player's UUID, name, IP, and (when Floodgate is present) platform. If auto-linking is enabled, it links the joining account to **other accounts whose last-known IP is the same current IP**, and creates `auto_ip` links. Only the **current IP** is used for linking, not the player's full IP history. This is deliberate: matching on every historical IP would mass-link unrelated players who happened to use the same shared VPN/proxy address at different times.
 
-**Manual links** (`/check` → Manage Alts → Link) are stored separately and can be removed with Unlink. Unlinking does not block future auto-links: if both accounts join again from a shared IP, they may be re-linked automatically.
+**Manual links** (`/check` → Manage Alts → Link) are stored separately and can be removed with Unlink. Unlinking does not block future auto-links: if both accounts join again from the same current IP, they may be re-linked automatically.
 
 **False-positive protection:**
 
 | Setting | Purpose |
 |---------|---------|
 | `ignored-ips` | IPs that are never recorded or linked (default: `127.0.0.1`, `::1`). Add your proxy/backend IP if players appear to share one address. |
-| `max-shared-ip-accounts` | Skip **auto-linking** on an IP once more than this many distinct accounts have used it. IP history is still recorded; only automatic linking is skipped. Default: `0` (disabled, no limit). Set e.g. `10` on busy networks to reduce VPN/CGNAT false positives. |
+| `max-shared-ip-accounts` | Skip **auto-linking** on an IP once more than this many accounts currently share it. IPs are still recorded; only automatic linking is skipped. Default: `0` (disabled, no limit). Set e.g. `10` on busy networks to reduce VPN/CGNAT false positives. |
 
 **Configuration** (`config.yml` → `alt-detection`):
 
@@ -499,8 +499,8 @@ alt-detection:
 | Key | Description |
 |-----|-------------|
 | `enabled` | Master toggle for alt detection features |
-| `auto-link-ip` | Auto-link on join when IPs match in history |
-| `record-ip-history` | Store UUID/name/IP and full IP history on join. Needed for `/check`, IP punishments, and historical linking. Turn off only if you do not want IPs stored at all |
+| `auto-link-ip` | Auto-link on join when another account currently shares the same IP |
+| `record-ip-history` | Store UUID/name/IP on join. Needed for `/check` and IP punishments. Turn off only if you do not want IPs stored at all |
 | `ignored-ips` | Never record or link these IPs |
 | `max-shared-ip-accounts` | VPN/CGNAT/proxy protection for auto-linking. `0` = no limit (default) |
 | `apply-to-alts-default` | Default state of the "apply to alts" toggle in the punish GUI |
