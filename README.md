@@ -634,7 +634,7 @@ Backends use offline mode; the proxy stays in online mode for Mojang authenticat
 
 #### Known limits
 
-- Vanish, Simple Voice Chat integration, and staff GUIs are **Paper backend only**.
+- Vanish, Simple Voice Chat integration, and staff GUIs are Paper backend only. They do not work on the proxies.
 - The proxy does not run punish commands or staff menus.
 - Simple Voice Chat is optional on backends. Without it, voice mute is skipped and the rest of SanctraBans still loads.
 - Players should connect through the proxy address, not directly to a backend port.
