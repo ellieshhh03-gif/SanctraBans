@@ -1,6 +1,6 @@
 # SanctraBans
 
-GUI-first punishment plugin for Paper 1.21.x with built-in IP-based alt detection, Bedrock/Geyser/Floodgate platform support, IP mute, staff vanish, Simple Voice Chat mute support, and full punishment history. Most staff workflows start with a command that opens a menu. Commands can also be used end-to-end without opening a GUI.
+GUI-first punishment plugin for Paper 1.21.x with built-in IP-based alt detection, Bedrock/Geyser/Floodgate platform support, cross-server network sync (BungeeCord, Waterfall, or Velocity), IP mute, staff vanish, Simple Voice Chat mute support, and full punishment history. Most staff workflows start with a command that opens a menu. Commands can also be used end-to-end without opening a GUI.
 
 **Data folder:** `plugins/SanctraBans/`  
 **Admin command:** `/sanctrabans`  
@@ -12,6 +12,11 @@ GUI-first punishment plugin for Paper 1.21.x with built-in IP-based alt detectio
 2. [Using the GUI](#2-using-the-gui)
 3. [Commands only (no GUI)](#3-commands-only-no-gui)
 4. [Other important notes](#4-other-important-notes)
+   - [Network setup (multi-server)](#network-setup-multi-server)
+   - [BungeeCord](#bungeecord)
+   - [Waterfall](#waterfall)
+   - [Velocity](#velocity)
+   - [Alt detection on networks](#alt-detection-on-networks)
 5. [Config files](#5-config-files)
 6. [Permissions reference](#6-permissions-reference)
 7. [Suggested permission sets by role](#7-suggested-permission-sets-by-role)
@@ -425,6 +430,219 @@ Syncs to alt batch punishments when `sync-reason-in-batch` or `sync-duration-in-
 
 ---
 
+### Network setup (multi-server)
+
+*Run SanctraBans across a proxy network with shared punishments and instant sync between Paper backends.*
+
+SanctraBans **supports BungeeCord, Waterfall, and Velocity**. The same JAR works on Paper backends and on any of those proxies; the plugin detects the platform at startup.
+
+| Proxy | Supported | Setup guide |
+|-------|-----------|-------------|
+| **BungeeCord** | Yes | [BungeeCord](#bungeecord) |
+| **Waterfall** | Yes | [Waterfall](#waterfall) |
+| **Velocity** (3.x) | Yes | [Velocity](#velocity) |
+
+Install SanctraBans on your proxy and on each Paper backend where staff issue punishments. A network runs **one** proxy at a time, so use the setup guide that matches yours.
+
+#### What every network needs
+
+| Requirement | Details |
+|-------------|---------|
+| **Shared database** | MySQL or MariaDB on the proxy and every backend. SQLite cannot sync across servers. |
+| **Matching credentials** | Same `use-mysql`, `mysql.type`, host, database, username, and password on every node. |
+| **IP forwarding** | Backends must receive each player's real IP from the proxy (see your proxy section below). Required for alt detection, IP bans, and IP mutes. |
+| **Backend sync** | `network.enabled: true` on each Paper backend. `network.enabled: false` on the proxy. |
+
+Use the same `mysql.type` everywhere (`mysql` or `mariadb`). Do not mix driver types against one database.
+
+#### SanctraBans config
+
+**Every node** (proxy and backends):
+
+```yaml
+use-mysql: true
+mysql:
+  type: mariadb   # or mysql
+  host: localhost
+  port: 3306
+  database: sanctra
+  username: root
+  password: 'your-password'
+```
+
+**Paper backends only** (unique `server-name` per server):
+
+```yaml
+network:
+  enabled: true
+  server-name: 'survival'   # optional; defaults to the Bukkit server name
+```
+
+**Proxy only:**
+
+```yaml
+network:
+  enabled: false
+```
+
+The proxy uses the database for login ban checks and IP recording. It relays sync messages between backends.
+
+Customize the ban screen shown at the proxy in `plugins/SanctraBans/layouts.yml` (`BanScreen` layout).
+
+#### How sync works
+
+1. Staff issue, revoke, or update a punishment on a **Paper backend**. SanctraBans writes the change to the **shared database**.
+2. That backend sends a **plugin message** to the **proxy** (BungeeCord, Waterfall, or Velocity).
+3. The proxy **relays** the message to every other backend on the network.
+4. Each receiving backend **refreshes its local cache** from the database and **kicks** online players if they are now banned or otherwise blocked.
+
+The proxy also checks the shared database on **login** and denies banned players before they reach a backend. Backends perform their own checks as well, so enforcement works even if a player connects directly during maintenance (though players should normally join through the proxy).
+
+#### What runs where
+
+| Feature | Proxy | Paper backend |
+|---------|-------|---------------|
+| Login ban enforcement | Yes | Yes |
+| Mute / IP mute enforcement | No | Yes |
+| GUI, commands, vanish, voice mute | No | Yes |
+| Alt detection (current IP) | Records identity | Full linking and enforcement |
+| Instant cache sync | Relays messages | Sends and receives |
+
+#### Alt detection on networks
+
+Alt detection links accounts that share the same **current IP**. The proxy and backends write into the same database. If backends only see the proxy IP instead of each player's real IP, unrelated accounts can be linked together.
+
+| Node | IP source |
+|------|-----------|
+| **Proxy** | Player's address when they connect to the proxy |
+| **Paper backend** | Forwarded player IP (only if forwarding is configured correctly) |
+
+After setup, verify with `/check <player>` and `sanctrabans.check.ip` on a backend. Different players should show different public IPs.
+
+If forwarding is misconfigured, you can add the proxy or host IP to `alt-detection.ignored-ips` as a fallback, but fixing forwarding is the correct solution. See [Alt detection](#alt-detection) for `ignored-ips` and `max-shared-ip-accounts`.
+
+---
+
+#### BungeeCord
+
+SanctraBans fully supports **BungeeCord** proxies: login ban checks, IP recording, and sync relay between Paper backends.
+
+Use this section if your network runs BungeeCord.
+
+**1. Install SanctraBans**
+
+| Location | Config |
+|----------|--------|
+| BungeeCord `plugins/` | `use-mysql: true`, `network.enabled: false` |
+| Each Paper backend `plugins/` | `use-mysql: true`, `network.enabled: true` |
+
+**2. BungeeCord proxy** (`config.yml`):
+
+```yaml
+ip_forward: true
+```
+
+**3. Each Paper backend** (`spigot.yml`):
+
+```yaml
+settings:
+  bungeecord: true
+```
+
+**4. Each Paper backend** (`config/paper-global.yml`):
+
+```yaml
+proxies:
+  velocity:
+    enabled: false
+```
+
+**5. Restart** the proxy and all Paper servers.
+
+**Verify:** ban a player on one backend; they should be blocked on the proxy and on other backends. `/check` on a backend should show each player's real IP, not the proxy IP.
+
+---
+
+#### Waterfall
+
+SanctraBans fully supports **Waterfall** proxies. Waterfall is a BungeeCord fork, so setup matches [BungeeCord](#bungeecord) with the same SanctraBans and IP forwarding settings.
+
+Use this section if your network runs Waterfall.
+
+- `ip_forward: true` in Waterfall `config.yml`
+- `bungeecord: true` in each Paper `spigot.yml`
+- `velocity.enabled: false` in each Paper `paper-global.yml`
+- Same SanctraBans database and `network` settings as BungeeCord
+
+Install SanctraBans on the Waterfall proxy and on each Paper backend where staff punish players.
+
+---
+
+#### Velocity
+
+SanctraBans fully supports **Velocity** proxies (Velocity 3.x): login ban checks, IP recording, and sync relay between Paper backends.
+
+Use this section if your network runs Velocity.
+
+**1. Install SanctraBans**
+
+| Location | Config |
+|----------|--------|
+| Velocity `plugins/` | `use-mysql: true`, `network.enabled: false` |
+| Each Paper backend `plugins/` | `use-mysql: true`, `network.enabled: true` |
+
+**2. Velocity proxy** (`velocity.toml`):
+
+```toml
+online-mode = true
+player-info-forwarding-mode = "modern"
+forwarding-secret = "your-secret-here"
+```
+
+Velocity may also create a `forwarding.secret` file. The secret must match Paper on every backend.
+
+**3. Each Paper backend** (`server.properties`):
+
+```properties
+online-mode=false
+```
+
+**4. Each Paper backend** (`spigot.yml`):
+
+```yaml
+settings:
+  bungeecord: false
+```
+
+**5. Each Paper backend** (`config/paper-global.yml`):
+
+```yaml
+proxies:
+  velocity:
+    enabled: true
+    online-mode: true
+    secret: 'your-secret-here'
+```
+
+Backends use offline mode; the proxy stays in online mode for Mojang authentication. Do not leave `bungeecord: true` in `spigot.yml` when using Velocity.
+
+**6. Restart** Velocity and all Paper servers. Look for `SanctraBans Velocity enabled.` on the proxy and `Network sync enabled for server '...'` on each backend.
+
+**Verify:** same as BungeeCord (ban syncs network-wide; `/check` shows real player IPs on backends).
+
+---
+
+#### Known limits
+
+- Vanish, Simple Voice Chat integration, and staff GUIs are **Paper backend only**.
+- The proxy does not run punish commands or staff menus.
+- Simple Voice Chat is optional on backends. Without it, voice mute is skipped and the rest of SanctraBans still loads.
+- Players should connect through the proxy address, not directly to a backend port.
+
+On first start with an existing database, harmless MariaDB/MySQL warnings about duplicate columns or indexes may appear during migration. They can be ignored.
+
+---
+
 ### Exempt players
 
 Players listed in `exempt-players` in `config.yml` cannot be punished. Individual exemption permissions also exist (e.g. `sanctrabans.ban.exempt`).
@@ -454,7 +672,8 @@ When a player reaches a warn count defined in `warn-actions`, the listed command
 ### Database
 
 - Default storage is SQLite (`data.db` in the plugin folder).
-- MySQL can be enabled in `config.yml` for multi-server setups.
+- MySQL or MariaDB can be enabled in `config.yml` (`use-mysql: true`, `mysql.type`: `mysql` or `mariadb`). SanctraBans uses the matching JDBC driver for each type.
+- For network sync, every node must use the same `mysql.type` and credentials.
 - Alt links, the last-known IP per account, and IP history are stored in the database and migrate automatically on plugin update.
 
 ---
@@ -469,7 +688,9 @@ SanctraBans links alternate accounts when they **currently share the same IP add
 - **Cracked / offline servers:** offline UUIDs are linked by IP like any other account.
 - **Mixed servers (cracked + premium):** the same person's premium UUID and cracked UUID can both link to each other when they share an IP, without false-linking two unrelated players who happen to use the same name.
 
-**On each join**, the plugin records the player's UUID, name, IP, and (when Floodgate is present) platform. If auto-linking is enabled, it links the joining account to **other accounts whose last-known IP is the same current IP**, and creates `auto_ip` links. Only the **current IP** is used for linking, not the player's full IP history. This is deliberate: matching on every historical IP would mass-link unrelated players who happened to use the same shared VPN/proxy address at different times.
+**On each join**, the plugin records the player's UUID, name, IP, and (when Floodgate is present) platform. If auto-linking is enabled, it links the joining account to **other accounts whose last-known IP is the same current IP**, and creates `auto_ip` links. Only the **current IP** is used for linking, not the player's full IP history. This is deliberate: matching on every historical IP would mass-link unrelated players who happened to use the same shared VPN or proxy address at different times.
+
+**Proxy networks:** the proxy and backends all write to the same database when using shared MySQL. Backends must receive each player's **real IP** via BungeeCord or Velocity forwarding. If they only see the proxy IP, unrelated accounts will be linked together. See [Alt detection on networks](#alt-detection-on-networks) in the network setup section.
 
 **Manual links** (`/check` → Manage Alts → Link) are stored separately and can be removed with Unlink. Unlinking does not block future auto-links: if both accounts join again from the same current IP, they may be re-linked automatically.
 
@@ -477,8 +698,8 @@ SanctraBans links alternate accounts when they **currently share the same IP add
 
 | Setting | Purpose |
 |---------|---------|
-| `ignored-ips` | IPs that are never recorded or linked (default: `127.0.0.1`, `::1`). Add your proxy/backend IP if players appear to share one address. |
-| `max-shared-ip-accounts` | Skip **auto-linking** on an IP once more than this many accounts currently share it. IPs are still recorded; only automatic linking is skipped. Default: `0` (disabled, no limit). Set e.g. `10` on busy networks to reduce VPN/CGNAT false positives. |
+| `ignored-ips` | IPs that are never recorded or linked (default: `127.0.0.1`, `::1`). On proxy networks, add your proxy or host IP only if backends still report it for every player (fix forwarding first). |
+| `max-shared-ip-accounts` | Skip **auto-linking** on an IP once more than this many accounts currently share it. IPs are still recorded; only automatic linking is skipped. Default: `0` (disabled, no limit). Set e.g. `10` on busy or VPN-heavy networks to reduce false positives. |
 
 **Configuration** (`config.yml` → `alt-detection`):
 
@@ -666,7 +887,7 @@ All files live in **`plugins/SanctraBans/`**.
 
 | File | Purpose |
 |------|---------|
-| **`config.yml`** | Main settings: database, `default-reason`, `independent-time-layouts`, exempt players, mute commands, voice-chat-mute, vanish, warn actions, temp-perms duration limits, **alt detection**, **bedrock**, duration presets, debug, prefix, and more |
+| **`config.yml`** | Main settings: database, `network`, `default-reason`, `independent-time-layouts`, exempt players, mute commands, voice-chat-mute, vanish, warn actions, temp-perms duration limits, **alt detection**, **bedrock**, duration presets, debug, prefix, and more |
 | **`reasons.yml`** | Preset reasons shown as books in the punish menu and edit-reason menu. Add entries here to show new reasons in the GUI |
 | **`escalation.yml`** | Time/duration **layouts** (escalation ladders) and **bindings** that map each reason + punishment type to a layout. Controls auto-escalation in the punish GUI |
 | **`gui.yml`** | Inventory layouts: slot positions for history, banlist, check, punish menu, reason picker, duration picker, filters, buttons, and theme materials |
@@ -692,6 +913,7 @@ All files live in **`plugins/SanctraBans/`**.
 | Change how many warns triggers auto-ban | `config.yml` → `warn-actions` |
 | Tune alt auto-linking (ignored IPs, shared-IP cap) | `config.yml` → `alt-detection` |
 | Enable/disable Bedrock platform tags | `config.yml` → `bedrock` |
+| Enable cross-server punishment sync | `config.yml` → `network.enabled` (requires shared MySQL) |
 | Change platform labels in menus | `messages.yml` → `platform.*` |
 
 ---
