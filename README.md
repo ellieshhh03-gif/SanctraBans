@@ -2,8 +2,7 @@
 
 GUI-first punishment plugin for **Paper, Purpur, Spigot, and Folia** 1.21.x, with built-in IP-based alt detection, Bedrock/Geyser/Floodgate platform support, cross-server network sync (BungeeCord, Waterfall, or Velocity), IP mute, staff vanish, Simple Voice Chat mute support, and full punishment history. Most staff workflows start with a command that opens a menu. Commands can also be used end-to-end without opening a GUI.
 
-**Supported game servers:** Paper · Purpur · Spigot · Folia (Minecraft 1.21.x)  
-**Recommended:** Paper or Purpur for the simplest setup. Spigot and Folia are supported with automatic fallbacks. See [Supported platforms](#supported-platforms).
+**Supported game servers:** Paper · Purpur · Spigot · Folia (Minecraft 1.21.x)
 
 **Data folder:** `plugins/SanctraBans/`  
 **Admin command:** `/sanctrabans`  
@@ -439,18 +438,16 @@ SanctraBans enabled on 1.21.11-... (MC: 1.21.11) (platform=FOLIA, full features)
 |----------|---------|-------|
 | **Paper** | Full | Recommended. Default compile target, with all features. |
 | **Purpur** | Full | Paper-compatible fork, detected and logged as `platform=PAPER`. |
-| **Spigot** | Near-full | Punishments, GUIs, mutes, network sync, alt detection, textured heads (Mojang session fetch), core vanish, crop/trample protection, and Simple Voice Chat mute. Spigot fallbacks for chat and Adventure APIs. **One difference:** advancement progress while vanished is not blocked (Paper, Purpur, and Folia only). |
+| **Spigot** | Near-full | Punishments, GUIs, mutes, network sync, alt detection, textured heads (Mojang session fetch), core vanish, crop/trample protection, and Simple Voice Chat mute. Uses legacy chat and text APIs where Spigot lacks Paper features. **One difference:** advancement progress while vanished is not blocked (Paper, Purpur, and Folia only). |
 | **Folia** | Full | Region-safe scheduling built in (`folia-supported: true`). Same feature set as Paper for normal staff workflows. |
 | **BungeeCord / Waterfall** | Full (proxy) | Login ban enforcement + sync relay. |
 | **Velocity** | Full (proxy) | Login ban enforcement + sync relay. |
 
 Cross-platform networks (e.g. Paper + Folia backends with shared MySQL) are supported.
 
-**Minecraft version:** 1.21.x only (`api-version: 1.21` in `plugin.yml`).
+**Minecraft version:** 1.21.x
 
 **Bedrock players:** Requires Floodgate on the backend regardless of server software (see [Bedrock / Geyser / Floodgate](#bedrock--geyser--floodgate)).
-
-For implementation details and a manual QA checklist, see `platform-support.md` and `platform-test-matrix.md` in the repository.
 
 ---
 
