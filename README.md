@@ -1,6 +1,9 @@
 # SanctraBans
 
-GUI-first punishment plugin for Paper 1.21.x with built-in IP-based alt detection, Bedrock/Geyser/Floodgate platform support, cross-server network sync (BungeeCord, Waterfall, or Velocity), IP mute, staff vanish, Simple Voice Chat mute support, and full punishment history. Most staff workflows start with a command that opens a menu. Commands can also be used end-to-end without opening a GUI.
+GUI-first punishment plugin for **Paper, Purpur, Spigot, and Folia** 1.21.x, with built-in IP-based alt detection, Bedrock/Geyser/Floodgate platform support, cross-server network sync (BungeeCord, Waterfall, or Velocity), IP mute, staff vanish, Simple Voice Chat mute support, and full punishment history. Most staff workflows start with a command that opens a menu. Commands can also be used end-to-end without opening a GUI.
+
+**Supported game servers:** Paper · Purpur · Spigot · Folia (Minecraft 1.21.x)  
+**Recommended:** Paper or Purpur for the simplest setup. Spigot and Folia are supported with automatic fallbacks. See [Supported platforms](#supported-platforms).
 
 **Data folder:** `plugins/SanctraBans/`  
 **Admin command:** `/sanctrabans`  
@@ -12,6 +15,7 @@ GUI-first punishment plugin for Paper 1.21.x with built-in IP-based alt detectio
 2. [Using the GUI](#2-using-the-gui)
 3. [Commands only (no GUI)](#3-commands-only-no-gui)
 4. [Other important notes](#4-other-important-notes)
+   - [Supported platforms](#supported-platforms)
    - [Network setup (multi-server)](#network-setup-multi-server)
    - [BungeeCord](#bungeecord)
    - [Waterfall](#waterfall)
@@ -37,12 +41,12 @@ GUI-first punishment plugin for Paper 1.21.x with built-in IP-based alt detectio
 | **Temp IP Ban** | Blocks the IP for a set amount of time (by player name or raw IPv4) |
 | **Mute** | Blocks chat, configured commands (e.g. `/msg`), and voice chat (when Simple Voice Chat is installed) |
 | **Temp Mute** | Mutes for a set amount of time (includes voice chat when Simple Voice Chat is installed) |
-| **IP Mute** | Mutes all accounts sharing the IP (by player name or raw IPv4; includes voice chat when Simple Voice Chat is installed) |
-| **Temp IP Mute** | IP mute for a set amount of time (by player name or raw IPv4; includes voice chat when Simple Voice Chat is installed) |
+| **IP Mute** | Mutes all accounts sharing the IP (by player name or raw IPv4, including voice chat when Simple Voice Chat is installed) |
+| **Temp IP Mute** | IP mute for a set amount of time (by player name or raw IPv4, including voice chat when Simple Voice Chat is installed) |
 | **Warn** | Issues a warning (counts toward warn actions) |
 | **Temp Warn** | Warning that lasts for a set amount of time |
 | **Kick** | Removes an online player (not stored long-term) |
-| **Note** | Internal staff record; player is not notified |
+| **Note** | Internal staff record. The player is not notified |
 
 ---
 
@@ -52,10 +56,10 @@ GUI-first punishment plugin for Paper 1.21.x with built-in IP-based alt detectio
 
 | GUI | How to open | What you can do |
 |-----|-------------|-----------------|
-| **Punish menu** | `/punish <player>` (full flow), or `/ban <player>`, `/tempban <player>`, etc. with only the target | Pick type → reason → duration (temps) → confirm; type-only commands skip straight to the reason step |
-| **Player check** | `/check <player>` | View join status, ban/mute/IP-mute state, warns/notes, linked alts; kick (online only), punish, history, notes, alt management |
-| **History** | `/history <player>` or from check/banlist | Browse all punishments with filters; left-click to edit/revoke |
-| **Banlist** | `/banlist` or `/banlist <search>` | View active punishments server-wide; filter, search, browse pages; left-click to manage, right-click for player history |
+| **Punish menu** | `/punish <player>` (full flow), or `/ban <player>`, `/tempban <player>`, etc. with only the target | Pick type → reason → duration (temps) → confirm. Type-only commands skip straight to the reason step |
+| **Player check** | `/check <player>` | View join status, ban/mute/IP-mute state, warns/notes, linked alts. Kick (online only), punish, history, notes, alt management |
+| **History** | `/history <player>` or from check/banlist | Browse all punishments with filters. Left-click to edit/revoke |
+| **Banlist** | `/banlist` or `/banlist <search>` | View active punishments server-wide. Filter, search, browse pages. Left-click to manage, right-click for player history |
 | **Warns** | `/warns` or `/warns <player>` | Multi-page list of warnings |
 | **Notes** | `/notes` or `/notes <player>` | Multi-page list of staff notes |
 | **Punishment edit** | Left-click a punishment in history or banlist | Change reason, change duration (active temps), revoke (with optional batch revoke for alts) |
@@ -100,7 +104,7 @@ GUI-first punishment plugin for Paper 1.21.x with built-in IP-based alt detectio
 - **Duration presets:** Quick-pick durations in the GUI (configured in `config.yml`).
 - **Warn actions:** Automatic commands when warn count hits a threshold (e.g. temp-ban at 3 warns).
 - **Staff duration limits:** `temp-perms` in config cap how long each staff rank can punish (by permission level).
-- **Offline & never-joined players:** `/check`, `/history`, and punish commands resolve names via local cache and Mojang (same as issuing a ban). Never-joined targets show a clear status; punishments apply on first login.
+- **Offline & never-joined players:** `/check`, `/history`, and punish commands resolve names via local cache and Mojang (same as issuing a ban). Never-joined targets show a clear status. Punishments apply on first login.
 - **Chat prompts:** Some GUI buttons ask you to type in chat (custom reason, custom duration, banlist search). Type `/cancel` to abort.
 - **Simple Voice Chat:** When [Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat) is installed on the server, SanctraBans mutes also block proximity voice for muted players. See [Simple Voice Chat integration](#simple-voice-chat-integration) below.
 - **Staff vanish:** `/vanish` hides staff from other players (tab list and in-world). Staff with bypass permission can still see vanished players. Staff with notify permission get alerts when others toggle vanish. See [Staff vanish](#staff-vanish) below.
@@ -129,7 +133,7 @@ The menu has up to four steps:
 
 #### Step 3: Duration (temporary types only)
 - **Escalation item** (repeater): use the suggested next step for this reason/offense (if configured).
-- **Browse layouts:** pick any time layout (on by default; set `independent-time-layouts: false` in config to disable).
+- **Browse layouts:** pick any time layout (on by default. Set `independent-time-layouts: false` in config to disable).
 - **Duration presets:** click a preset (e.g. `1d`, `7d`, `perma`).
 - Presets use multiple pages like reasons: **14 per page**.
 - **Specify in chat:** type a duration (e.g. `30m`, `2d`, `perma`).
@@ -143,7 +147,7 @@ The menu has up to four steps:
 - **Cancel** aborts.
 - If the target **never joined**, the summary notes that the punishment applies on first login.
 
-**Shortcuts to the punish menu** (players only; console runs the command immediately instead):
+**Shortcuts to the punish menu** (players only. The console runs the command immediately instead):
 - `/check <player>` → Punish, Kick, or Add Note buttons (kick/note open at reason step with type preset)
 - `/ban <player>`, `/tempban <player>`, `/mute <player>`, `/warn <player>`, `/kick <player>`, `/note <player>`, `/banip <player|IPv4>`, etc. with **no other arguments** open the punish menu at the **reason step** with that command's type already selected (requires the matching punishment permission)
 - `/punish <player>` opens the full menu at the **type picker** (any punishment type you can use)
@@ -159,7 +163,7 @@ Shows the player's head with status lore:
 | Line | What it shows |
 |------|----------------|
 | **Status** | `Online now`, `Offline (last seen …)`, `Never joined this server`, or `Unknown account` |
-| **Platform** | `Java`, `Bedrock`, or `Unknown` (with a hint that unknown is decided on next join). Requires Floodgate for Bedrock detection; see [Bedrock / Geyser / Floodgate](#bedrock--geyser--floodgate) |
+| **Platform** | `Java`, `Bedrock`, or `Unknown` (with a hint that unknown is decided on next join). Requires Floodgate for Bedrock detection. See [Bedrock / Geyser / Floodgate](#bedrock--geyser--floodgate) |
 | **UUID** | Real UUID, or `Could not resolve`. Requires **`sanctrabans.check.uuid`** (not granted by `check` alone) |
 | **IP** | Live or last-known IP, or `Never connected` / `Hidden`. Requires **`sanctrabans.check.ip`** (not granted by `check` alone) |
 | **Ban / mute / IP mute** | Active punishment state for the account |
@@ -171,7 +175,7 @@ Without `sanctrabans.check.uuid` or `sanctrabans.check.ip`, those lines show **H
 **Buttons:**
 | Button | Action |
 |--------|--------|
-| Kick | Opens punish menu at kick step (**only when the target is online**); shows a locked barrier when offline or never joined |
+| Kick | Opens punish menu at kick step (**only when the target is online**). Shows a locked barrier when offline or never joined |
 | Manage Alts | Opens alt link/unlink GUI |
 | Add Note | Opens punish menu at note step |
 | History | Opens full punishment history |
@@ -226,7 +230,7 @@ Change duration only appears for **active temporary** punishments (temp ban, tem
 |--------|----------------|
 | Change reason | Pick a preset, **No reason**, or type in chat |
 | Change duration | Pick a preset or type a new duration (active temp punishments only) |
-| Revoke | Confirm revoke; optional **batch revoke** for all punishments in the same alt batch |
+| Revoke | Confirm revoke, or optional **batch revoke** for all punishments in the same alt batch |
 | Back | Return to the previous menu |
 
 ---
@@ -300,7 +304,7 @@ Omitting `[reason]` uses the default text **`No reason specified`** (set `defaul
 |--------|----------------------|
 | **Online player** | Uses their current connection IP |
 | **Offline player (name)** | Uses the last-known IP from the plugin cache (player must have joined before) |
-| **Raw IPv4** | Uses that address directly; no Mojang lookup or prior join required |
+| **Raw IPv4** | Uses that address directly. No Mojang lookup or prior join required |
 
 IP ban/mute types affect **everyone currently on that IP**. Apply-to-alts (`-a`) does not apply to raw IP targets (no linked account UUID).
 
@@ -333,7 +337,7 @@ Examples:
 /tempban Player 1d Griefing -a
 ```
 
-**Time layout token** (enabled by default; disable with `independent-time-layouts: false`):
+**Time layout token** (enabled by default. Disable with `independent-time-layouts: false`):
 ```
 /tempban Player #HackingBan Cheating
 ```
@@ -418,6 +422,38 @@ Syncs to alt batch punishments when `sync-reason-in-batch` or `sync-duration-in-
 
 *Server setup, integrations, and behaviour that is not tied to a single menu.*
 
+### Supported platforms
+
+SanctraBans supports **Paper**, **Purpur**, **Spigot**, and **Folia** on game server backends and proxies.
+
+At startup the plugin detects your server software and logs the platform, for example:
+
+```text
+SanctraBans enabled on 1.21.11-... (MC: 1.21.11) (platform=PAPER, full features).
+SanctraBans enabled on 1.21.11-... (MC: 1.21.11) (platform=PAPER, full features).   ← Purpur logs as PAPER
+SanctraBans enabled on 1.21.11-... (MC: 1.21.11) (platform=SPIGOT, full features (advancement blocking while vanished requires Paper+)).
+SanctraBans enabled on 1.21.11-... (MC: 1.21.11) (platform=FOLIA, full features).
+```
+
+| Platform | Support | Notes |
+|----------|---------|-------|
+| **Paper** | Full | Recommended. Default compile target, with all features. |
+| **Purpur** | Full | Paper-compatible fork, detected and logged as `platform=PAPER`. |
+| **Spigot** | Near-full | Punishments, GUIs, mutes, network sync, alt detection, textured heads (Mojang session fetch), core vanish, crop/trample protection, and Simple Voice Chat mute. Spigot fallbacks for chat and Adventure APIs. **One difference:** advancement progress while vanished is not blocked (Paper, Purpur, and Folia only). |
+| **Folia** | Full | Region-safe scheduling built in (`folia-supported: true`). Same feature set as Paper for normal staff workflows. |
+| **BungeeCord / Waterfall** | Full (proxy) | Login ban enforcement + sync relay. |
+| **Velocity** | Full (proxy) | Login ban enforcement + sync relay. |
+
+Cross-platform networks (e.g. Paper + Folia backends with shared MySQL) are supported.
+
+**Minecraft version:** 1.21.x only (`api-version: 1.21` in `plugin.yml`).
+
+**Bedrock players:** Requires Floodgate on the backend regardless of server software (see [Bedrock / Geyser / Floodgate](#bedrock--geyser--floodgate)).
+
+For implementation details and a manual QA checklist, see `platform-support.md` and `platform-test-matrix.md` in the repository.
+
+---
+
 ### Config changes on a live server
 
 - Edit files in `plugins/SanctraBans/`, save, then `/sanctrabans reload` or restart.
@@ -425,16 +461,16 @@ Syncs to alt batch punishments when `sync-reason-in-batch` or `sync-duration-in-
   - **New keys** from the jar are added to your config files.
   - **Updated jar defaults** replace your value only if you never customized that key (your value still matches the previous jar default).
   - **Your custom edits are kept.** If you changed a value away from the old default, it will not be overwritten.
-- Snapshots of the last jar defaults are stored in `plugins/SanctraBans/.defaults/` (auto-managed; do not edit). This is how the plugin tells the difference between “still on the old default” and “staff customized this”.
+- Snapshots of the last jar defaults are stored in `plugins/SanctraBans/.defaults/` (auto-managed. Do not edit). This is how the plugin tells the difference between “still on the old default” and “staff customized this”.
 - Back up `plugins/SanctraBans/` before major updates (configs + `data.db`).
 
 ---
 
 ### Network setup (multi-server)
 
-*Run SanctraBans across a proxy network with shared punishments and instant sync between Paper backends.*
+*Run SanctraBans across a proxy network with shared punishments and instant sync between game server backends.*
 
-SanctraBans **supports BungeeCord, Waterfall, and Velocity**. The same JAR works on Paper backends and on any of those proxies; the plugin detects the platform at startup.
+SanctraBans **supports BungeeCord, Waterfall, and Velocity**. Backends can run Paper, Purpur, Spigot, or Folia. Each side detects its platform at startup.
 
 | Proxy | Supported | Setup guide |
 |-------|-----------|-------------|
@@ -442,7 +478,7 @@ SanctraBans **supports BungeeCord, Waterfall, and Velocity**. The same JAR works
 | **Waterfall** | Yes | [Waterfall](#waterfall) |
 | **Velocity** (3.x) | Yes | [Velocity](#velocity) |
 
-Install SanctraBans on your proxy and on each Paper backend where staff issue punishments. A network runs **one** proxy at a time, so use the setup guide that matches yours.
+Install SanctraBans on your proxy and on each **game server backend** where staff issue punishments (Paper, Purpur, Spigot, or Folia). A network runs **one** proxy at a time, so use the setup guide that matches yours.
 
 #### What every network needs
 
@@ -451,7 +487,7 @@ Install SanctraBans on your proxy and on each Paper backend where staff issue pu
 | **Shared database** | MySQL or MariaDB on the proxy and every backend. SQLite cannot sync across servers. |
 | **Matching credentials** | Same `use-mysql`, `mysql.type`, host, database, username, and password on every node. |
 | **IP forwarding** | Backends must receive each player's real IP from the proxy (see your proxy section below). Required for alt detection, IP bans, and IP mutes. |
-| **Backend sync** | `network.enabled: true` on each Paper backend. `network.enabled: false` on the proxy. |
+| **Backend sync** | `network.enabled: true` on each game server backend. `network.enabled: false` on the proxy. |
 
 Use the same `mysql.type` everywhere (`mysql` or `mariadb`). Do not mix driver types against one database.
 
@@ -468,14 +504,37 @@ mysql:
   database: sanctra
   username: root
   password: 'your-password'
+database:
+  pool-size: 10
+  connection-timeout-ms: 10000
+  max-lifetime-ms: 1800000
 ```
 
-**Paper backends only** (unique `server-name` per server):
+#### Database connection pool (networks)
+
+SanctraBans uses HikariCP for database connections. On **shared MySQL/MariaDB** networks, each node (proxy + every backend) opens its own pool. Tune `database.pool-size` so total connections stay within your MySQL `max_connections` limit.
+
+| Setup | Suggested `pool-size` per node |
+|-------|-------------------------------|
+| Single Paper server | `10` (default) |
+| Busy backend on a shared network | `20`–`30` |
+| Lightweight proxy only | `5`–`10` |
+
+Example: one proxy + four backends at `pool-size: 20` uses up to **100** connections to MySQL. Leave headroom for admin tools and other plugins.
+
+Other `database` keys:
+
+- `connection-timeout-ms`: how long to wait for a free connection (default `10000`)
+- `max-lifetime-ms`: recycle connections periodically (default `1800000`, 30 minutes)
+
+Keep the database **geographically close** to your game servers when possible, because ban cache misses still hit MySQL on pre-login. Use a **dedicated MySQL instance** for SanctraBans on large networks if you can.
+
+**Game server backends only** (unique `server-name` per server: Paper, Purpur, Spigot, or Folia):
 
 ```yaml
 network:
   enabled: true
-  server-name: 'survival'   # optional; defaults to the Bukkit server name
+  server-name: 'survival'   # optional, defaults to the Bukkit server name
 ```
 
 **Proxy only:**
@@ -491,7 +550,7 @@ Customize the ban screen shown at the proxy in `plugins/SanctraBans/layouts.yml`
 
 #### How sync works
 
-1. Staff issue, revoke, or update a punishment on a **Paper backend**. SanctraBans writes the change to the **shared database**.
+1. Staff issue, revoke, or update a punishment on a **game server backend**. SanctraBans writes the change to the **shared database**.
 2. That backend sends a **plugin message** to the **proxy** (BungeeCord, Waterfall, or Velocity).
 3. The proxy **relays** the message to every other backend on the network.
 4. Each receiving backend **refreshes its local cache** from the database and **kicks** online players if they are now banned or otherwise blocked.
@@ -500,8 +559,8 @@ The proxy also checks the shared database on **login** and denies banned players
 
 #### What runs where
 
-| Feature | Proxy | Paper backend |
-|---------|-------|---------------|
+| Feature | Proxy | Backend (Paper / Purpur / Spigot / Folia) |
+|---------|-------|---------------------------------------------|
 | Login ban enforcement | Yes | Yes |
 | Mute / IP mute enforcement | No | Yes |
 | GUI, commands, vanish, voice mute | No | Yes |
@@ -515,7 +574,7 @@ Alt detection links accounts that share the same **current IP**. The proxy and b
 | Node | IP source |
 |------|-----------|
 | **Proxy** | Player's address when they connect to the proxy |
-| **Paper backend** | Forwarded player IP (only if forwarding is configured correctly) |
+| **Game server backend** | Forwarded player IP (only if forwarding is configured correctly) |
 
 After setup, verify with `/check <player>` and `sanctrabans.check.ip` on a backend. Different players should show different public IPs.
 
@@ -525,7 +584,7 @@ If forwarding is misconfigured, you can add the proxy or host IP to `alt-detecti
 
 #### BungeeCord
 
-SanctraBans fully supports **BungeeCord** proxies: login ban checks, IP recording, and sync relay between Paper backends.
+SanctraBans fully supports **BungeeCord** proxies: login ban checks, IP recording, and sync relay between game server backends.
 
 Use this section if your network runs BungeeCord.
 
@@ -534,7 +593,7 @@ Use this section if your network runs BungeeCord.
 | Location | Config |
 |----------|--------|
 | BungeeCord `plugins/` | `use-mysql: true`, `network.enabled: false` |
-| Each Paper backend `plugins/` | `use-mysql: true`, `network.enabled: true` |
+| Each game server backend `plugins/` | `use-mysql: true`, `network.enabled: true` |
 
 **2. BungeeCord proxy** (`config.yml`):
 
@@ -542,14 +601,14 @@ Use this section if your network runs BungeeCord.
 ip_forward: true
 ```
 
-**3. Each Paper backend** (`spigot.yml`):
+**3. Each game server backend** (`spigot.yml`):
 
 ```yaml
 settings:
   bungeecord: true
 ```
 
-**4. Each Paper backend** (`config/paper-global.yml`):
+**4. Each game server backend** (`config/paper-global.yml`):
 
 ```yaml
 proxies:
@@ -559,7 +618,7 @@ proxies:
 
 **5. Restart** the proxy and all Paper servers.
 
-**Verify:** ban a player on one backend; they should be blocked on the proxy and on other backends. `/check` on a backend should show each player's real IP, not the proxy IP.
+**Verify:** ban a player on one backend. They should be blocked on the proxy and on other backends. `/check` on a backend should show each player's real IP, not the proxy IP.
 
 ---
 
@@ -574,13 +633,13 @@ Use this section if your network runs Waterfall.
 - `velocity.enabled: false` in each Paper `paper-global.yml`
 - Same SanctraBans database and `network` settings as BungeeCord
 
-Install SanctraBans on the Waterfall proxy and on each Paper backend where staff punish players.
+Install SanctraBans on the Waterfall proxy and on each game server backend where staff punish players.
 
 ---
 
 #### Velocity
 
-SanctraBans fully supports **Velocity** proxies (Velocity 3.x): login ban checks, IP recording, and sync relay between Paper backends.
+SanctraBans fully supports **Velocity** proxies (Velocity 3.x): login ban checks, IP recording, and sync relay between game server backends.
 
 Use this section if your network runs Velocity.
 
@@ -589,7 +648,7 @@ Use this section if your network runs Velocity.
 | Location | Config |
 |----------|--------|
 | Velocity `plugins/` | `use-mysql: true`, `network.enabled: false` |
-| Each Paper backend `plugins/` | `use-mysql: true`, `network.enabled: true` |
+| Each game server backend `plugins/` | `use-mysql: true`, `network.enabled: true` |
 
 **2. Velocity proxy** (`velocity.toml`):
 
@@ -601,7 +660,7 @@ forwarding-secret = "your-secret-here"
 
 Velocity may also create a `forwarding.secret` file. The secret must match Paper on every backend.
 
-**3. Each Paper backend** (`server.properties`):
+**3. Each game server backend** (`server.properties`):
 
 ```properties
 online-mode=false
@@ -614,7 +673,7 @@ settings:
   bungeecord: false
 ```
 
-**5. Each Paper backend** (`config/paper-global.yml`):
+**5. Each game server backend** (`config/paper-global.yml`):
 
 ```yaml
 proxies:
@@ -624,17 +683,17 @@ proxies:
     secret: 'your-secret-here'
 ```
 
-Backends use offline mode; the proxy stays in online mode for Mojang authentication. Do not leave `bungeecord: true` in `spigot.yml` when using Velocity.
+Backends use offline mode. The proxy stays in online mode for Mojang authentication. Do not leave `bungeecord: true` in `spigot.yml` when using Velocity.
 
 **6. Restart** Velocity and all Paper servers. Look for `SanctraBans Velocity enabled.` on the proxy and `Network sync enabled for server '...'` on each backend.
 
-**Verify:** same as BungeeCord (ban syncs network-wide; `/check` shows real player IPs on backends).
+**Verify:** same as BungeeCord (ban syncs network-wide, and `/check` shows real player IPs on backends).
 
 ---
 
 #### Known limits
 
-- Vanish, Simple Voice Chat integration, and staff GUIs are Paper backend only. They do not work on the proxies.
+- Vanish, Simple Voice Chat integration, and staff GUIs run on **game server backends only** (Paper, Purpur, Spigot, or Folia). They do not work on proxies.
 - The proxy does not run punish commands or staff menus.
 - Simple Voice Chat is optional on backends. Without it, voice mute is skipped and the rest of SanctraBans still loads.
 - Players should connect through the proxy address, not directly to a backend port.
@@ -699,7 +758,7 @@ SanctraBans links alternate accounts when they **currently share the same IP add
 | Setting | Purpose |
 |---------|---------|
 | `ignored-ips` | IPs that are never recorded or linked (default: `127.0.0.1`, `::1`). On proxy networks, add your proxy or host IP only if backends still report it for every player (fix forwarding first). |
-| `max-shared-ip-accounts` | Skip **auto-linking** on an IP once more than this many accounts currently share it. IPs are still recorded; only automatic linking is skipped. Default: `0` (disabled, no limit). Set e.g. `10` on busy or VPN-heavy networks to reduce false positives. |
+| `max-shared-ip-accounts` | Skip **auto-linking** on an IP once more than this many accounts currently share it. IPs are still recorded. Only automatic linking is skipped. Default: `0` (disabled, no limit). Set e.g. `10` on busy or VPN-heavy networks to reduce false positives. |
 
 **Configuration** (`config.yml` → `alt-detection`):
 
@@ -735,7 +794,7 @@ alt-detection:
 
 *Bedrock player detection and platform labels in staff menus.*
 
-SanctraBans integrates with **[Floodgate](https://geysermc.org/wiki/floodgate/)** (used alongside Geyser) as an optional soft dependency. **Geyser alone is not required** for SanctraBans; only Floodgate's API is used for Bedrock detection. If Floodgate is not installed, the plugin behaves as before (all players treated as Java; no errors).
+SanctraBans integrates with **[Floodgate](https://geysermc.org/wiki/floodgate/)** (used alongside Geyser) as an optional soft dependency. **Geyser alone is not required** for SanctraBans. Only Floodgate's API is used for Bedrock detection. If Floodgate is not installed, the plugin behaves as before (all players treated as Java, with no errors).
 
 **What it does when Floodgate is present:**
 
@@ -752,7 +811,7 @@ SanctraBans integrates with **[Floodgate](https://geysermc.org/wiki/floodgate/)*
 |-----------|-----------|
 | **Floodgate plugin** on the backend | Yes, for Bedrock detection |
 | **Geyser** | Typical setup (Bedrock clients connect through Geyser → Floodgate on backend) |
-| Floodgate bundled in SanctraBans jar | No, compile-time API only; Floodgate must be on the server |
+| Floodgate bundled in SanctraBans jar | No, compile-time API only. Floodgate must be on the server |
 
 **Configuration** (`config.yml` → `bedrock`):
 
@@ -796,7 +855,7 @@ SanctraBans can block **proximity voice chat** for muted players when [Simple Vo
 | **Simple Voice Chat server plugin** | Server | Receives voice packets and exposes the voice chat API |
 | **Simple Voice Chat client mod** | Each player who uses voice | Without the mod, a player cannot use voice chat at all |
 
-Both the **server plugin** and the **player mod** are required for voice mute enforcement. SanctraBans alone is enough for text mutes; voice blocking only applies when a muted player tries to speak through Simple Voice Chat.
+Both the **server plugin** and the **player mod** are required for voice mute enforcement. SanctraBans alone is enough for text mutes. Voice blocking only applies when a muted player tries to speak through Simple Voice Chat. Voice mute works on **Paper, Purpur, Spigot, and Folia** whenever Simple Voice Chat is installed on that backend.
 
 **If Simple Voice Chat is not installed on the server**, SanctraBans works normally and the voice hook is skipped. Text mutes and command blocking are unchanged.
 
@@ -823,23 +882,25 @@ voice-chat-mute:
 
 *Hide staff from other players in-world and on the tab list.*
 
-SanctraBans includes a staff **vanish** command that hides players from others in-world and on the tab list. Vanish uses per-viewer visibility (`hidePlayer` / `showPlayer`); staff with see permission can still view vanished players normally.
+SanctraBans includes a staff **vanish** command that hides players from others in-world and on the tab list. Vanish uses per-viewer visibility (`hidePlayer` / `showPlayer`). Staff with see permission can still view vanished players normally.
 
 **Stealth behavior while vanished:**
 
 | Behavior | What happens |
 |----------|----------------|
 | Item pickup | Blocked: cannot pick up ground items |
-| Flight | Enabled: double-tap jump to fly (survival/adventure; not creative) |
+| Flight | Enabled: double-tap jump to fly (survival/adventure, not creative) |
 | Invulnerability | No damage from any source while vanished |
 | Hunger | Frozen in survival: food level, saturation, and exhaustion do not change while vanished (`freeze-hunger`) |
-| Mobs | Ignore you entirely (no targeting; existing targets cleared on vanish) |
+| Mobs | Ignore you entirely (no targeting, and existing targets cleared on vanish) |
 | Storage containers | Silent access: opens the **real** container GUI (hopper, brewing stand, furnace, chest, barrel, shulker, dispenser, dropper, minecart chests/hoppers, etc.). Lid animation and open sounds are suppressed for players without see-vanished permission via PacketEvents |
 | Ender chest | Opens your personal ender chest silently |
 | Redstone / mechanisms | Blocked: pressure plates, buttons, levers, doors, trapdoors, fence gates, bells, note blocks, sculk sensors, farmland trampling, redstone ore glow (single and multi block change packets), and similar interactions do nothing |
-| Sounds and particles | All sounds and particles near vanished players are suppressed for everyone nearby (entity sounds, positional sounds, and particles; PacketEvents is bundled; an external PacketEvents plugin is used when installed). Config key `suppress-splash` controls this |
-| Tab list | Vanished staff are stripped from tab list packets sent to players without see permission (`hide-tab-list`; complements Bukkit `hidePlayer`) |
+| Sounds and particles | All sounds and particles near vanished players are suppressed for everyone nearby (entity sounds, positional sounds, and particles). PacketEvents is bundled. An external PacketEvents plugin is used when installed. Config key `suppress-splash` controls this |
+| Tab list | Vanished staff are stripped from tab list packets sent to players without see permission (`hide-tab-list`, which complements Bukkit `hidePlayer`) |
 | Doors / trapdoors / gates | Cannot be opened while vanished. You also **cannot walk through closed doors** until you unvanish |
+
+**Platform notes:** Core vanish (hide player, tab list, containers, mob ignore, flight, invulnerability, PacketEvents polish) works on **Paper, Purpur, Spigot, and Folia**. On **Spigot**, crop/trample protection uses Bukkit block events. **Blocking advancement progress while vanished** requires Paper, Purpur, or Folia.
 
 While vanished, an action bar reminder is shown **only to you** above the hotbar so you do not forget vanish is active. Vanish is session-only and clears on disconnect.
 
@@ -930,8 +991,8 @@ Each punishment or revoke permission covers **both commands and GUI**. There are
 
 | Example permission | Command access | GUI access |
 |--------------------|----------------|------------|
-| `sanctrabans.ban` | `/ban <player> <reason>` | Open punish menu; select Ban |
-| `sanctrabans.tempban` | `/tempban <player> <duration> <reason>` | Open punish menu; select Temp Ban |
+| `sanctrabans.ban` | `/ban <player> <reason>` | Open punish menu and select Ban |
+| `sanctrabans.tempban` | `/tempban <player> <duration> <reason>` | Open punish menu and select Temp Ban |
 | `sanctrabans.unban` | `/unban <player>` | Revoke button in history/banlist edit menu |
 | `sanctrabans.change-reason` | `/change-reason <id> [reason]` | Change reason button in edit menu |
 | `sanctrabans.change-duration` | *(GUI only)* | Change duration button in edit menu (all temp types) |
@@ -939,7 +1000,7 @@ Each punishment or revoke permission covers **both commands and GUI**. There are
 
 **Opening the punish menu** (`/punish`, `/ban <player>` alone, check menu Punish button): requires at least one punishment-type permission (`ban`, `mute`, `kick`, etc.). Types you lack appear locked in the menu.
 
-**Opening the punishment edit menu** (left-click in history/banlist): requires `sanctrabans.history` or `sanctrabans.banlist`. Individual edit actions (reason, duration, revoke) use their own permissions; missing permissions show as locked barrier buttons.
+**Opening the punishment edit menu** (left-click in history/banlist): requires `sanctrabans.history` or `sanctrabans.banlist`. Individual edit actions (reason, duration, revoke) use their own permissions. Missing permissions show as locked barrier buttons.
 
 `sanctrabans.punish` is an optional legacy alias that opens the punish menu without any specific punishment permission. Most servers should grant individual type permissions instead.
 
@@ -970,7 +1031,7 @@ Each punishment or revoke permission covers **both commands and GUI**. There are
 |------------|-------------|
 | `sanctrabans.unban` | Revoke bans (`/unban`) and revoke from history/banlist GUI |
 | `sanctrabans.unmute` | Revoke mutes (`/unmute`) and revoke from GUI |
-| `sanctrabans.unipmute` | Revoke IP mutes (`/unipmute`; alias behaviour same as unmute for IP mutes) and revoke from GUI |
+| `sanctrabans.unipmute` | Revoke IP mutes (`/unipmute`, alias behaviour same as unmute for IP mutes) and revoke from GUI |
 | `sanctrabans.unwarn` | Revoke warnings (`/unwarn`, `/unwarn clear`) and revoke from GUI |
 | `sanctrabans.unnote` | Revoke notes (`/unnote`, `/unnote clear`) and revoke from GUI |
 | `sanctrabans.unpunish` | Revoke any punishment by ID (`/unpunish`) |
@@ -1000,9 +1061,9 @@ Per-type `change-duration.*` nodes are optional. Grant `sanctrabans.change-durat
 | `sanctrabans.history` | Open player history GUI (`/history`) |
 | `sanctrabans.banlist` | Open server banlist GUI (`/banlist`) |
 | `sanctrabans.banlist.search` | Use banlist search (spyglass button / `/banlist <query>`) |
-| `sanctrabans.check` | Open player check GUI (`/check`): status, punishments, alts; **does not** include UUID or IP |
-| `sanctrabans.check.uuid` | See UUID on check GUI (separate from `check`; included in `all`) |
-| `sanctrabans.check.ip` | See IP address on check GUI (separate from `check`; included in `all`) |
+| `sanctrabans.check` | Open player check GUI (`/check`): status, punishments, alts. **Does not** include UUID or IP |
+| `sanctrabans.check.uuid` | See UUID on check GUI (separate from `check`, included in `all`) |
+| `sanctrabans.check.ip` | See IP address on check GUI (separate from `check`, included in `all`) |
 
 ---
 
@@ -1071,7 +1132,7 @@ Staff only receive broadcast messages if they have the matching notify permissio
 | *(same pattern for `ipban`, `tempipban`, `ipmute`, `tempipmute`, `tempwarn`)* | |
 | `sanctrabans.notify.revoke` | All revoke broadcast notifications |
 | `sanctrabans.notify.revoke.<type>` | Revoke broadcast for a specific type only |
-| `sanctrabans.vanish.notify` | Vanish enter/leave alerts (see [Vanish permissions](#vanish-permissions); also requires a vanish staff permission) |
+| `sanctrabans.vanish.notify` | Vanish enter/leave alerts (see [Vanish permissions](#vanish-permissions). Also requires a vanish staff permission) |
 
 `sanctrabans.all` includes revoke notify access and `sanctrabans.vanish.notify`.
 
