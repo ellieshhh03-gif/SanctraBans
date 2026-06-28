@@ -1,6 +1,6 @@
 # SanctraBans
 
-GUI-first punishment plugin for **Paper, Purpur, Spigot, and Folia** 1.21.x, with built-in IP-based alt detection, Bedrock/Geyser/Floodgate platform support, cross-server network sync (BungeeCord, Waterfall, or Velocity), IP mute, staff vanish, Simple Voice Chat mute support, and full punishment history. Most staff workflows start with a command that opens a menu. Commands can also be used end-to-end without opening a GUI.
+GUI-first punishment plugin for **Paper, Purpur, Spigot, and Folia** 1.21.x, with built-in IP-based alt detection, Bedrock/Geyser/Floodgate platform support, cross-server network sync (BungeeCord, Waterfall, or Velocity), IP mute, Simple Voice Chat mute support, and full punishment history. Most staff workflows start with a command that opens a menu. Commands can also be used end-to-end without opening a GUI.
 
 **Supported game servers:** Paper · Purpur · Spigot · Folia (Minecraft 1.21.x)
 
@@ -85,8 +85,6 @@ GUI-first punishment plugin for **Paper, Purpur, Spigot, and Folia** 1.21.x, wit
 | `/check <player>` | Open check GUI |
 | `/warns [player]` | Open warns GUI |
 | `/notes [player]` | Open notes GUI |
-| `/vanish` | Toggle staff vanish on yourself (hidden from tab list and other players) |
-| `/vanish <player>` | Toggle vanish on another online player |
 | `/sanctrabans reload` | Reload configs (admin) |
 | `/cancel` | Cancel an active chat input prompt (while a GUI asked you to type something) |
 
@@ -106,7 +104,6 @@ GUI-first punishment plugin for **Paper, Purpur, Spigot, and Folia** 1.21.x, wit
 - **Offline & never-joined players:** `/check`, `/history`, and punish commands resolve names via local cache and Mojang (same as issuing a ban). Never-joined targets show a clear status. Punishments apply on first login.
 - **Chat prompts:** Some GUI buttons ask you to type in chat (custom reason, custom duration, banlist search). Type `/cancel` to abort.
 - **Simple Voice Chat:** When [Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat) is installed on the server, SanctraBans mutes also block proximity voice for muted players. See [Simple Voice Chat integration](#simple-voice-chat-integration) below.
-- **Staff vanish:** `/vanish` hides staff from other players (tab list and in-world). Staff with bypass permission can still see vanished players. Staff with notify permission get alerts when others toggle vanish. See [Staff vanish](#staff-vanish) below.
 
 ---
 
@@ -430,7 +427,7 @@ At startup the plugin detects your server software and logs the platform, for ex
 ```text
 SanctraBans enabled on 1.21.11-... (MC: 1.21.11) (platform=PAPER, full features).
 SanctraBans enabled on 1.21.11-... (MC: 1.21.11) (platform=PAPER, full features).   ← Purpur logs as PAPER
-SanctraBans enabled on 1.21.11-... (MC: 1.21.11) (platform=SPIGOT, full features (advancement blocking while vanished requires Paper+)).
+SanctraBans enabled on 1.21.11-... (MC: 1.21.11) (platform=SPIGOT, full features).
 SanctraBans enabled on 1.21.11-... (MC: 1.21.11) (platform=FOLIA, full features).
 ```
 
@@ -438,7 +435,7 @@ SanctraBans enabled on 1.21.11-... (MC: 1.21.11) (platform=FOLIA, full features)
 |----------|---------|-------|
 | **Paper** | Full | Recommended. Default compile target, with all features. |
 | **Purpur** | Full | Paper-compatible fork, detected and logged as `platform=PAPER`. |
-| **Spigot** | Near-full | Punishments, GUIs, mutes, network sync, alt detection, textured heads (Mojang session fetch), core vanish, crop/trample protection, and Simple Voice Chat mute. Uses legacy chat and text APIs where Spigot lacks Paper features. **One difference:** advancement progress while vanished is not blocked (Paper, Purpur, and Folia only). |
+| **Spigot** | Near-full | Punishments, GUIs, mutes, network sync, alt detection, textured heads (Mojang session fetch), and Simple Voice Chat mute. Uses legacy chat and text APIs where Spigot lacks Paper features. |
 | **Folia** | Full | Region-safe scheduling built in (`folia-supported: true`). Same feature set as Paper for normal staff workflows. |
 | **BungeeCord / Waterfall** | Full (proxy) | Login ban enforcement + sync relay. |
 | **Velocity** | Full (proxy) | Login ban enforcement + sync relay. |
@@ -560,7 +557,7 @@ The proxy also checks the shared database on **login** and denies banned players
 |---------|-------|---------------------------------------------|
 | Login ban enforcement | Yes | Yes |
 | Mute / IP mute enforcement | No | Yes |
-| GUI, commands, vanish, voice mute | No | Yes |
+| GUI, commands, voice mute | No | Yes |
 | Alt detection (current IP) | Records identity | Full linking and enforcement |
 | Instant cache sync | Relays messages | Sends and receives |
 
@@ -690,7 +687,7 @@ Backends use offline mode. The proxy stays in online mode for Mojang authenticat
 
 #### Known limits
 
-- Vanish, Simple Voice Chat integration, and staff GUIs run on **game server backends only** (Paper, Purpur, Spigot, or Folia). They do not work on proxies.
+- Simple Voice Chat integration and staff GUIs run on **game server backends only** (Paper, Purpur, Spigot, or Folia). They do not work on proxies.
 - The proxy does not run punish commands or staff menus.
 - Simple Voice Chat is optional on backends. Without it, voice mute is skipped and the rest of SanctraBans still loads.
 - Players should connect through the proxy address, not directly to a backend port.
@@ -721,7 +718,6 @@ When a player reaches a warn count defined in `warn-actions`, the listed command
 
 - Non-silent punishments broadcast to online staff with the matching `sanctrabans.notify.<type>` permission (or `sanctrabans.all`).
 - Revokes broadcast to staff with `sanctrabans.notify.revoke` or per-type revoke notify permissions.
-- Vanish toggles broadcast to online staff with `sanctrabans.vanish.notify` who also hold at least one vanish staff permission (`vanish`, `vanish.others`, or `vanish.see`). See [Staff vanish](#staff-vanish).
 
 ---
 
@@ -875,68 +871,6 @@ voice-chat-mute:
 
 ---
 
-### Staff vanish
-
-*Hide staff from other players in-world and on the tab list.*
-
-SanctraBans includes a staff **vanish** command that hides players from others in-world and on the tab list. Vanish uses per-viewer visibility (`hidePlayer` / `showPlayer`). Staff with see permission can still view vanished players normally.
-
-**Stealth behavior while vanished:**
-
-| Behavior | What happens |
-|----------|----------------|
-| Item pickup | Blocked: cannot pick up ground items |
-| Flight | Enabled: double-tap jump to fly (survival/adventure, not creative) |
-| Invulnerability | No damage from any source while vanished |
-| Hunger | Frozen in survival: food level, saturation, and exhaustion do not change while vanished (`freeze-hunger`) |
-| Mobs | Ignore you entirely (no targeting, and existing targets cleared on vanish) |
-| Storage containers | Silent access: opens the **real** container GUI (hopper, brewing stand, furnace, chest, barrel, shulker, dispenser, dropper, minecart chests/hoppers, etc.). Lid animation and open sounds are suppressed for players without see-vanished permission via PacketEvents |
-| Ender chest | Opens your personal ender chest silently |
-| Redstone / mechanisms | Blocked: pressure plates, buttons, levers, doors, trapdoors, fence gates, bells, note blocks, sculk sensors, farmland trampling, redstone ore glow (single and multi block change packets), and similar interactions do nothing |
-| Sounds and particles | All sounds and particles near vanished players are suppressed for everyone nearby (entity sounds, positional sounds, and particles). PacketEvents is bundled. An external PacketEvents plugin is used when installed. Config key `suppress-splash` controls this |
-| Tab list | Vanished staff are stripped from tab list packets sent to players without see permission (`hide-tab-list`, which complements Bukkit `hidePlayer`) |
-| Doors / trapdoors / gates | Cannot be opened while vanished. You also **cannot walk through closed doors** until you unvanish |
-
-**Platform notes:** Core vanish (hide player, tab list, containers, mob ignore, flight, invulnerability, PacketEvents polish) works on **Paper, Purpur, Spigot, and Folia**. On **Spigot**, crop/trample protection uses Bukkit block events. **Blocking advancement progress while vanished** requires Paper, Purpur, or Folia.
-
-While vanished, an action bar reminder is shown **only to you** above the hotbar so you do not forget vanish is active. Vanish is session-only and clears on disconnect.
-
-**Config** (`config.yml` → `vanish`):
-
-```yaml
-vanish:
-  enabled: true
-  override-command: true
-  mob-ignore: true
-  silent-containers: true
-  block-world-interactions: true
-  flight: true
-  invulnerable: true
-  freeze-hunger: true
-  suppress-splash: true
-  hide-tab-list: true
-  indicator:
-    enabled: true
-    refresh-interval-ticks: 20
-```
-
-| Command | Permission | Description |
-|---------|------------|-------------|
-| `/vanish` | `sanctrabans.vanish` | Toggle vanish on yourself |
-| `/vanish <player>` | `sanctrabans.vanish.others` | Toggle vanish on another online player |
-
-| Permission | Description |
-|------------|-------------|
-| `sanctrabans.vanish.see` | See vanished players in-world and on the tab list |
-| `sanctrabans.vanish.exempt` | Cannot be vanished by other staff |
-| `sanctrabans.vanish.notify` | Receive staff alerts when someone enters or leaves vanish (`%NAME% went into vanish` / `%NAME% went out of vanish`). Requires this permission **and** at least one of `vanish`, `vanish.others`, or `vanish.see`. The player who toggled vanish and the vanished player do not receive the broadcast. |
-
-Messages for vanish notifications can be edited in `messages.yml` under `vanish.notify-enabled` and `vanish.notify-disabled`. The on-screen vanish reminder text is `vanish.indicator` in `messages.yml`. Toggle or customize it in `config.yml` under `vanish.indicator` (`enabled`, `refresh-interval-ticks`).
-
-If another plugin also uses `/vanish`, set `override-command: true` (default) so SanctraBans re-registers `/vanish` after all plugins load. You can also run `/sanctrabans:vanish` explicitly.
-
----
-
 ## 5. Config files
 
 *What each file in `plugins/SanctraBans/` is for.*
@@ -945,7 +879,7 @@ All files live in **`plugins/SanctraBans/`**.
 
 | File | Purpose |
 |------|---------|
-| **`config.yml`** | Main settings: database, `network`, `default-reason`, `independent-time-layouts`, exempt players, mute commands, voice-chat-mute, vanish, warn actions, temp-perms duration limits, **alt detection**, **bedrock**, duration presets, debug, prefix, and more |
+| **`config.yml`** | Main settings: database, `network`, `default-reason`, `independent-time-layouts`, exempt players, mute commands, voice-chat-mute, warn actions, temp-perms duration limits, **alt detection**, **bedrock**, duration presets, debug, prefix, and more |
 | **`reasons.yml`** | Preset reasons shown as books in the punish menu and edit-reason menu. Add entries here to show new reasons in the GUI |
 | **`escalation.yml`** | Time/duration **layouts** (escalation ladders) and **bindings** that map each reason + punishment type to a layout. Controls auto-escalation in the punish GUI |
 | **`gui.yml`** | Inventory layouts: slot positions for history, banlist, check, punish menu, reason picker, duration picker, filters, buttons, and theme materials |
@@ -1090,18 +1024,6 @@ Per-type `change-duration.*` nodes are optional. Grant `sanctrabans.change-durat
 
 ---
 
-### Vanish permissions
-
-| Permission | Description |
-|------------|-------------|
-| `sanctrabans.vanish` | Toggle vanish on yourself (`/vanish`) |
-| `sanctrabans.vanish.others` | Toggle vanish on other players (`/vanish <player>`) |
-| `sanctrabans.vanish.see` | See vanished players in-world and on the tab list |
-| `sanctrabans.vanish.exempt` | Cannot be vanished by other staff |
-| `sanctrabans.vanish.notify` | Receive staff alerts when someone enters or leaves vanish. Requires this permission **and** at least one of `vanish`, `vanish.others`, or `vanish.see` |
-
----
-
 ### Other staff permissions
 
 | Permission | Description |
@@ -1129,9 +1051,8 @@ Staff only receive broadcast messages if they have the matching notify permissio
 | *(same pattern for `ipban`, `tempipban`, `ipmute`, `tempipmute`, `tempwarn`)* | |
 | `sanctrabans.notify.revoke` | All revoke broadcast notifications |
 | `sanctrabans.notify.revoke.<type>` | Revoke broadcast for a specific type only |
-| `sanctrabans.vanish.notify` | Vanish enter/leave alerts (see [Vanish permissions](#vanish-permissions). Also requires a vanish staff permission) |
 
-`sanctrabans.all` includes revoke notify access and `sanctrabans.vanish.notify`.
+`sanctrabans.all` includes revoke notify access.
 
 ---
 
@@ -1146,7 +1067,6 @@ Grant to staff or players who should be immune to a punishment type:
 | `sanctrabans.mute.exempt` | Cannot be muted |
 | `sanctrabans.tempmute.exempt` | Cannot be temp-muted |
 | `sanctrabans.warn.exempt` | Cannot be warned |
-| `sanctrabans.vanish.exempt` | Cannot be vanished by other staff |
 | *(same pattern for other types)* | |
 
 Players in `exempt-players` in `config.yml` are also protected.
@@ -1180,9 +1100,6 @@ sanctrabans.unwarn
 sanctrabans.banlist
 sanctrabans.change-reason
 sanctrabans.change-duration
-sanctrabans.vanish
-sanctrabans.vanish.see
-sanctrabans.vanish.notify
 sanctrabans.notify.kick
 sanctrabans.notify.warn
 sanctrabans.notify.mute
@@ -1224,7 +1141,7 @@ sanctrabans.notify.revoke
 sanctrabans.all
 ```
 
-`sanctrabans.all` includes every permission in this reference (punishments, lookup, alts, vanish, vanish notify, silent, check UUID/IP, notifications, `/sanctrabans reload`, and `sanctrabans.vanish.exempt`).
+`sanctrabans.all` includes every permission in this reference (punishments, lookup, alts, silent, check UUID/IP, notifications, and `/sanctrabans reload`).
 
 ---
 
