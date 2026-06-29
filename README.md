@@ -1,5 +1,7 @@
 # SanctraBans
 
+**Author:** Rhlnxxd
+
 GUI-first punishment plugin for **Paper, Purpur, Spigot, and Folia** 1.21.x, with built-in IP-based alt detection, Bedrock/Geyser/Floodgate platform support, cross-server network sync (BungeeCord, Waterfall, or Velocity), IP mute, Simple Voice Chat mute support, and full punishment history. Most staff workflows start with a command that opens a menu. Commands can also be used end-to-end without opening a GUI.
 
 **Supported game servers:** Paper · Purpur · Spigot · Folia (Minecraft 1.21.x)
@@ -236,7 +238,7 @@ Use the GUI or the chat command:
 3. Review the preview (counts by type, including alt-batch expansions)
 4. Confirm to execute (skipped when `gui.confirm-revoke: false` in `config.yml`, rollback runs immediately after preview)
 
-**Command flow:** Same permissions and limits as the GUI. Works from console. When `gui.confirm-revoke: true`, the first run prints a preview and you must add `confirm` at the end to execute (example: `/punishments rollback Steve 1d confirm`).
+**Command flow:** Same permissions and limits as the GUI. Works from console. When `gui.confirm-revoke: true`, the first run prints a preview and you must add `confirm` at the end to execute (example: `/punishments rollback <player> 1d confirm`).
 
 The time window is measured from **when each punishment was issued** (`start_time`), not when it expires.
 
@@ -499,10 +501,10 @@ Opens the menu at the **reason step** with that type pre-selected. `/punish Play
 
 Examples:
 ```
-/punishments rollback Steve 1d
-/punishments rollback Steve 6h confirm
+/punishments rollback <player> 1d
+/punishments rollback <player> 6h confirm
 /punishments restore 12
-/punishments rollback-list Steve
+/punishments rollback-list <player>
 ```
 
 When `gui.confirm-revoke: true` in `config.yml`, the first rollback command prints a preview. Add `confirm` to execute. When `gui.confirm-revoke: false`, the rollback runs immediately. Same rollback window tier limits as the staff check GUI (`staffcheck.rollback-perms` and `sanctrabans.staffcheck.rollback.dur.*`).
