@@ -1348,18 +1348,38 @@ sanctrabans.notify.revoke
 ---
 
 ### Admin
+
+Add to senior moderator set:
+```
+sanctrabans.admin
+sanctrabans.punish
+sanctrabans.ipban
+sanctrabans.tempipban
+sanctrabans.ipmute
+sanctrabans.tempipmute
+sanctrabans.unipmute
+sanctrabans.staffcheck
+sanctrabans.staffcheck.rollback
+sanctrabans.staffcheck.rollback.dur.max
+sanctrabans.staffcheck.rollback.restore
+sanctrabans.staffcheck.rollback.restore.list
+sanctrabans.notify.ipban
+sanctrabans.notify.tempipban
+sanctrabans.notify.ipmute
+sanctrabans.notify.tempipmute
+sanctrabans.notify.tempwarn
+```
+
+Server admins: punishments (including IP), full staff check and rollback (any operator, unlimited window, restore undo), config reload, and broadcast notifications for IP and temp-warn actions. Does **not** include `sanctrabans.all`
+
+---
+
+### Head Admin
 ```
 sanctrabans.all
 ```
 
-Or explicitly for owners who need staff audit without full `all`:
-```
-sanctrabans.staffcheck
-sanctrabans.staffcheck.rollback
-sanctrabans.staffcheck.rollback.dur.max
-```
-
-`sanctrabans.all` includes every permission in this reference (punishments, lookup, alts, staff check, rollback, silent, check UUID/IP, notifications, and `/sanctrabans reload`).
+Full plugin access: every punishment, lookup, alt, staff check, rollback, restore, silent, check UUID/IP, notification, exemption, and `/sanctrabans reload` node in this reference.
 
 ---
 
