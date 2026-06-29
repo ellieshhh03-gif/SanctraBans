@@ -64,6 +64,7 @@ GUI-first punishment plugin for **Paper, Purpur, Spigot, and Folia** 1.21.x, wit
 | **Punishment edit** | Left-click a punishment in history or banlist | Change reason, change duration (active temps), revoke (with optional batch revoke for alts) |
 | **Alt management** | `/check <player>` → Manage Alts | View linked accounts, manually link/unlink alts |
 | **Duration layout browser** | Punish menu duration step (when enabled) | Pick any configured time layout |
+| **Staff check** | `/staffcheck <staff>` | Audit punishments **issued by** a staff member: summary counts, paginated history with filters, optional bulk rollback and restore |
 
 ---
 
@@ -83,6 +84,10 @@ GUI-first punishment plugin for **Paper, Purpur, Spigot, and Folia** 1.21.x, wit
 | `/history <player>` | Open history GUI |
 | `/banlist [search]` | Open banlist GUI |
 | `/check <player>` | Open check GUI |
+| `/staffcheck <staff>` | Open staff check GUI (punishments issued by that staff member) |
+| `/punishments rollback <staff> <window> [confirm]` | Roll back punishments issued by a staff member within a time window (hard delete) |
+| `/punishments restore <batchId>` | Restore a rollback batch within the configured undo window |
+| `/punishments rollback-list [staff]` | Open GUI of restorable rollback batches (all staff, or filtered). Console prints a text list |
 | `/warns [player]` | Open warns GUI |
 | `/notes [player]` | Open notes GUI |
 | `/sanctrabans reload` | Reload configs (admin) |
@@ -101,8 +106,9 @@ GUI-first punishment plugin for **Paper, Purpur, Spigot, and Folia** 1.21.x, wit
 - **Duration presets:** Quick-pick durations in the GUI (configured in `config.yml`).
 - **Warn actions:** Automatic commands when warn count hits a threshold (e.g. temp-ban at 3 warns).
 - **Staff duration limits:** `temp-perms` in config cap how long each staff rank can punish (by permission level).
+- **Staff check & rollback:** `/staffcheck` audits punishments issued by a staff member and can bulk-remove them within a time window (hard delete, not revoke). Snapshots are kept for a configurable undo window (default 3 days). Use `/punishments restore` or the staff check **Restore Rollback** button to undo an accidental rollback. Rollback window limits use `staffcheck.rollback-perms` and `sanctrabans.staffcheck.rollback.dur.*` (see [Staff check](#staff-check-staffcheck-staff) and [Staff duration limits](#staff-duration-limits)).
 - **Offline & never-joined players:** `/check`, `/history`, and punish commands resolve names via local cache and Mojang (same as issuing a ban). Never-joined targets show a clear status. Punishments apply on first login.
-- **Chat prompts:** Some GUI buttons ask you to type in chat (custom reason, custom duration, banlist search). Type `/cancel` to abort.
+- **Chat prompts:** Some GUI buttons ask you to type in chat (custom reason, custom duration, banlist search, **rollback time window**). Type `/cancel` to abort.
 - **Simple Voice Chat:** When [Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat) is installed on the server, SanctraBans mutes also block proximity voice for muted players. See [Simple Voice Chat integration](#simple-voice-chat-integration) below.
 
 ---
@@ -190,6 +196,116 @@ Without `sanctrabans.check.uuid` or `sanctrabans.check.ip`, those lines show **H
 - **Filter** (compass): All, Active, Expired, Bans, Mutes, Warns, Notes.
 - **Previous / Next:** browse through pages of results.
 - **Left-click** a punishment: open **Punishment Edit** (requires `sanctrabans.history` or `sanctrabans.banlist`).
+
+---
+
+### Staff check (`/staffcheck <staff>`)
+
+*Audit punishments issued by a staff member and optionally roll them back in bulk.*
+
+Use this when you need to review what a moderator did, or undo a batch of mistakes they made recently. This is **not** the same as `/check <player>` (which inspects a **target** player). Staff check lists punishments where the named staff member was the **operator**.
+
+**Opening the menu:**
+- `/staffcheck <staff>` requires view permission (see [Staff check & rollback](#staff-check--rollback))
+- Staff with only `sanctrabans.staffcheck.own` can open `/staffcheck` for **their own name only**
+- Player-only command (console cannot open the GUI)
+- If the named staff member has **no recorded punishments**, you get a chat message and the menu does not open
+
+**Summary head (top of menu):**
+- Total punishments issued by that staff member
+- Breakdown by type (bans, mutes, warns, notes, kicks) with active counts
+- Time since their most recent recorded punishment
+
+**History list:**
+- Same pagination and **filters** as player history (All, Active, Expired, Bans, Mutes, Warns, Notes)
+- Each entry shows the **target player** head and punishment details
+- **Left-click** an entry to open **Punishment Edit** (same as history/banlist)
+
+**Rollback (requires `sanctrabans.staffcheck.rollback`):**
+
+Use the GUI or the chat command:
+
+```
+/punishments rollback <staff> <window> [confirm]
+```
+
+**GUI flow:**
+
+1. Click the **Rollback** button (TNT by default in `gui.yml`)
+2. Pick a time window preset (from `staffcheck.rollback-presets` in `config.yml`) or type a custom window in chat (e.g. `2h`, `1d`)
+3. Review the preview (counts by type, including alt-batch expansions)
+4. Confirm to execute (skipped when `gui.confirm-revoke: false` in `config.yml`, rollback runs immediately after preview)
+
+**Command flow:** Same permissions and limits as the GUI. Works from console. When `gui.confirm-revoke: true`, the first run prints a preview and you must add `confirm` at the end to execute (example: `/punishments rollback Steve 1d confirm`).
+
+The time window is measured from **when each punishment was issued** (`start_time`), not when it expires.
+
+**Important: rollback is a hard delete from live tables, not a revoke:**
+- Matching punishment rows are **removed from the database** (including history-only records such as kicks)
+- **Active** punishments are cleared from enforcement first (players can rejoin / chat again if nothing else blocks them)
+- When any punishment in an alt batch matches, the **full alt batch** is included
+- On networked servers, a single sync refresh propagates the removal to all backends sharing MySQL
+- Staff revoke broadcasts still fire for active punishments that were cleared
+- Before delete, a **snapshot batch** is stored so the rollback can be undone within the restore window (default **3 days**, configurable)
+
+**Restore accidental rollbacks (requires `sanctrabans.staffcheck.rollback.restore`):**
+
+```
+/punishments restore <batchId>
+/punishments rollback-list [staff]
+```
+
+After rollback, success messages include a **batch ID** (for example `#12`). Restore re-inserts deleted rows with their original IDs, re-tracks active punishments, and re-enforces online players. If a target already has an active punishment of the same blocking type (ban, mute, IP), that row is **skipped** and you get a partial restore message. Kick history rows are restored as history only (players are not re-kicked).
+
+**Restore GUI:**
+- **`/punishments rollback-list`** opens a **global** menu of all restorable batches (every staff member)
+- **`/punishments rollback-list <staff>`** opens the same menu filtered to one operator
+- **`/staffcheck <staff>` → Restore Rollback** opens the filtered menu with a back button to staff check
+
+Restore eligibility is **not** tied to rollback window tier limits (`dur.*`). It only requires the restore permission, a batch within the configured age window, and a batch that has not already been restored.
+
+**Rollback window limits:** Presets longer than your rank's cap appear as **locked barrier items** (same style as punishment types you cannot use). Custom chat input over the limit shows an error with your max window. Limits work like temp punishment caps: grant `sanctrabans.staffcheck.rollback.dur.N` and map `N` to max seconds in `staffcheck.rollback-perms` (see [Staff duration limits](#staff-duration-limits)).
+
+**Configuration** (`config.yml` → `staffcheck`):
+
+```yaml
+staffcheck:
+  rollback-presets:
+    - 5m
+    - 10m
+    - 15m
+    - 20m
+    - 30m
+    - 45m
+    - 1h
+    - 2h
+    - 3h
+    - 6h
+    - 12h
+    - 1d
+    - 7d
+    - 30d
+  rollback-perms:
+    1: 3600
+    2: 86400
+    3: 604800
+    4: 2592000
+    5: -1
+  rollback-restore:
+    enabled: true
+    window-days: 3
+    max-batches-kept: 50
+```
+
+| Key | Description |
+|-----|-------------|
+| `rollback-presets` | Quick-pick windows in the rollback time menu |
+| `rollback-perms` | Max window in **seconds** per permission tier (`-1` = unlimited for that tier) |
+| `rollback-restore.enabled` | Store snapshot batches before delete so rollbacks can be undone |
+| `rollback-restore.window-days` | How long batch snapshots remain restorable (default 3) |
+| `rollback-restore.max-batches-kept` | Cap on restorable batches listed / kept before purge |
+
+GUI slot layout: `gui.yml` → `staffcheck`, `staffcheck-rollback-time`, `staffcheck-rollback-confirm`, `staffcheck-rollback-restore`, `rollback-restore-list`. Messages: `messages.yml` → `staffcheck.*`, `punishments.restore-*`.
 
 ---
 
@@ -371,6 +487,30 @@ Opens the menu at the **reason step** with that type pre-selected. `/punish Play
 
 ---
 
+### Staff rollback
+
+*Bulk-delete punishments issued by a staff member within a time window (hard delete from live tables, not revoke). Requires `sanctrabans.staffcheck.rollback` and view access to that operator.*
+
+```
+/punishments rollback <staff> <window> [confirm]
+/punishments restore <batchId>
+/punishments rollback-list [staff]
+```
+
+Examples:
+```
+/punishments rollback Steve 1d
+/punishments rollback Steve 6h confirm
+/punishments restore 12
+/punishments rollback-list Steve
+```
+
+When `gui.confirm-revoke: true` in `config.yml`, the first rollback command prints a preview. Add `confirm` to execute. When `gui.confirm-revoke: false`, the rollback runs immediately. Same rollback window tier limits as the staff check GUI (`staffcheck.rollback-perms` and `sanctrabans.staffcheck.rollback.dur.*`).
+
+Each rollback stores a snapshot batch (when `staffcheck.rollback-restore.enabled` is true). Success output includes the batch ID. Restore within `rollback-restore.window-days` (default 3) using `/punishments restore`, **`/punishments rollback-list`** (global GUI), or the staff check **Restore Rollback** button. Requires `sanctrabans.staffcheck.rollback.restore`. Partial restore occurs when restored rows would conflict with existing active punishments of the same blocking type.
+
+---
+
 ### Editing punishments
 
 *Update reason or duration on an existing entry.*
@@ -395,11 +535,17 @@ Syncs to alt batch punishments when `sync-reason-in-batch` or `sync-duration-in-
 ```
 /history <player>
 /check <player>
+/staffcheck <staff>
 /banlist
 /banlist <search query>
 /warns [player]
 /notes [player]
+/punishments rollback <staff> <window> [confirm]
+/punishments restore <batchId>
+/punishments rollback-list [staff]
 ```
+
+`/staffcheck` opens a GUI. `/punishments rollback-list` opens the global restore GUI for players (console gets a text list). `/punishments rollback` and `restore` work from chat or console (see [Staff check](#staff-check-staffcheck-staff)).
 
 ---
 
@@ -511,8 +657,8 @@ SanctraBans uses HikariCP for database connections. On **shared MySQL/MariaDB** 
 | Setup | Suggested `pool-size` per node |
 |-------|-------------------------------|
 | Single Paper server | `10` (default) |
-| Busy backend on a shared network | `20`–`30` |
-| Lightweight proxy only | `5`–`10` |
+| Busy backend on a shared network | `20`-`30` |
+| Lightweight proxy only | `5`-`10` |
 
 Example: one proxy + four backends at `pool-size: 20` uses up to **100** connections to MySQL. Leave headroom for admin tools and other plugins.
 
@@ -704,7 +850,44 @@ Players listed in `exempt-players` in `config.yml` cannot be punished. Individua
 
 ### Staff duration limits
 
-`temp-perms` in `config.yml` maps permission **levels** to max duration in seconds. Staff without a high enough level cannot issue longer temp punishments.
+SanctraBans uses two parallel tier maps in `config.yml`. Each **level** (`1`, `2`, …) is unlocked by granting the matching permission node. Higher levels override lower ones when a staff member has multiple tier nodes. A value of `-1` means unlimited for that tier.
+
+#### Temp punishment limits (`temp-perms`)
+
+Maps levels to the **maximum temp punishment duration** (in seconds) a staff member can issue. Checked when issuing or editing temp punishments.
+
+| Config key | Permission (example) | Typical use |
+|------------|----------------------|-------------|
+| `temp-perms.1` | `sanctrabans.tempban.dur.1` (and same level on other temp types) | e.g. 1 hour max |
+| `temp-perms.2` | `sanctrabans.tempmute.dur.2` | e.g. 1 day max |
+| … | `sanctrabans.<type>.dur.N` | One node per temp command type you want to cap |
+| *(bypass)* | `sanctrabans.<type>.dur.max` | Ignore all temp duration caps for that type |
+
+Default tiers in `config.yml`: `1` = 1h, `2` = 1d, `3` = 7d, `4` = 30d, `5` = unlimited.
+
+#### Rollback window limits (`staffcheck.rollback-perms`)
+
+Maps levels to the **maximum rollback time window** (in seconds) a staff member can select when using staff check rollback. Checked on preset click, custom chat input, and again at confirm. Over-limit presets are shown as locked barriers in the rollback time menu.
+
+| Config key | Permission | Typical use |
+|------------|------------|-------------|
+| `staffcheck.rollback-perms.1` | `sanctrabans.staffcheck.rollback.dur.1` | e.g. roll back up to 1 hour |
+| `staffcheck.rollback-perms.2` | `sanctrabans.staffcheck.rollback.dur.2` | e.g. roll back up to 1 day |
+| … | `sanctrabans.staffcheck.rollback.dur.N` | Levels 1-10 |
+| *(bypass)* | `sanctrabans.staffcheck.rollback.dur.max` | Any rollback window |
+| *(no tier granted)* | (none) | **Unlimited** rollback window (only `staffcheck.rollback` required) |
+
+Default tiers mirror `temp-perms`: `1` = 1h, `2` = 1d, `3` = 7d, `4` = 30d, `5` = unlimited.
+
+Example LuckPerms setup for a senior mod who may roll back up to 1 hour:
+
+```
+sanctrabans.staffcheck
+sanctrabans.staffcheck.rollback
+sanctrabans.staffcheck.rollback.dur.1
+```
+
+With default config, `dur.1` caps the window at 3600 seconds (1 hour). Grant `dur.2` for 1 day, `dur.3` for 7 days, and so on.
 
 ---
 
@@ -879,10 +1062,10 @@ All files live in **`plugins/SanctraBans/`**.
 
 | File | Purpose |
 |------|---------|
-| **`config.yml`** | Main settings: database, `network`, `default-reason`, `independent-time-layouts`, exempt players, mute commands, voice-chat-mute, warn actions, temp-perms duration limits, **alt detection**, **bedrock**, duration presets, debug, prefix, and more |
+| **`config.yml`** | Main settings: database, `network`, `default-reason`, `independent-time-layouts`, exempt players, mute commands, voice-chat-mute, warn actions, **temp-perms** and **staffcheck.rollback-perms** duration limits, **staffcheck** rollback presets, **alt detection**, **bedrock**, duration presets, debug, prefix, and more |
 | **`reasons.yml`** | Preset reasons shown as books in the punish menu and edit-reason menu. Add entries here to show new reasons in the GUI |
 | **`escalation.yml`** | Time/duration **layouts** (escalation ladders) and **bindings** that map each reason + punishment type to a layout. Controls auto-escalation in the punish GUI |
-| **`gui.yml`** | Inventory layouts: slot positions for history, banlist, check, punish menu, reason picker, duration picker, filters, buttons, and theme materials |
+| **`gui.yml`** | Inventory layouts: slot positions for history, banlist, check, **staff check**, **rollback time/confirm**, punish menu, reason picker, duration picker, filters, buttons, and theme materials |
 | **`messages.yml`** | All in-game text: chat messages, GUI button labels, ban screen text references, broadcast templates |
 | **`layouts.yml`** | Screen layouts shown to punished players (ban screen, mute screen, kick screen message lines) |
 | **`data.db`** | SQLite database (created automatically). Stores all punishments, alt links, IP cache, **IP history**, and escalation progress. Not a YAML file you edit by hand |
@@ -903,6 +1086,10 @@ All files live in **`plugins/SanctraBans/`**.
 | Change voice mute blocked message | `messages.yml` → `mute.blocked-voice` / `mute.blocked-voice-temp` |
 | Change ban screen text | `layouts.yml` |
 | Change how many warns triggers auto-ban | `config.yml` → `warn-actions` |
+| Change staff check rollback presets | `config.yml` → `staffcheck.rollback-presets` |
+| Change max rollback window per rank | `config.yml` → `staffcheck.rollback-perms` + LuckPerms `staffcheck.rollback.dur.*` |
+| Change staff check / rollback GUI layout | `gui.yml` → `staffcheck`, `staffcheck-rollback-time`, `staffcheck-rollback-confirm` |
+| Change staff check / rollback messages | `messages.yml` → `staffcheck.*` |
 | Tune alt auto-linking (ignored IPs, shared-IP cap) | `config.yml` → `alt-detection` |
 | Enable/disable Bedrock platform tags | `config.yml` → `bedrock` |
 | Enable cross-server punishment sync | `config.yml` → `network.enabled` (requires shared MySQL) |
@@ -1024,6 +1211,27 @@ Per-type `change-duration.*` nodes are optional. Grant `sanctrabans.change-durat
 
 ---
 
+### Staff check & rollback
+
+| Permission | Default | Description |
+|------------|---------|-------------|
+| `sanctrabans.staffcheck` | op | View punishments issued by **any** staff member (`/staffcheck <staff>`) |
+| `sanctrabans.staffcheck.own` | false | View only punishments you issued yourself (`/staffcheck` with your own name) |
+| `sanctrabans.staffcheck.rollback` | op | Use rollback from staff check GUI or `/punishments rollback` (hard-delete punishments in a time window). Requires view access to that operator |
+| `sanctrabans.staffcheck.rollback.restore` | op | Restore a rollback batch within the configured undo window (`/punishments restore` or staff check GUI) |
+| `sanctrabans.staffcheck.rollback.restore.list` | op | List restorable rollback batches (`/punishments rollback-list`). Inherits from restore permission |
+
+**Rollback window tiers** (levels `dur.1` … `dur.10` are enforced at runtime. Only `dur.max` is declared in `plugin.yml`):
+
+| Permission | Description |
+|------------|-------------|
+| `sanctrabans.staffcheck.rollback.dur.1` … `.dur.10` | Max rollback window in seconds, level maps to `staffcheck.rollback-perms` in `config.yml` |
+| `sanctrabans.staffcheck.rollback.dur.max` | Bypass rollback window limits (included in `sanctrabans.all`) |
+
+If a staff member has `staffcheck.rollback` but **no** `dur.*` nodes, rollback windows are unlimited. Grant tier nodes to cap how far back they can undo another staff member's actions. Over-limit presets appear as barrier blocks. Custom windows show `rollback-window-exceeds-limit` in chat.
+
+---
+
 ### Other staff permissions
 
 | Permission | Description |
@@ -1128,6 +1336,7 @@ sanctrabans.alts.view
 sanctrabans.alts.manage
 sanctrabans.alts.link
 sanctrabans.alts.apply
+sanctrabans.staffcheck.own
 sanctrabans.notify.tempban
 sanctrabans.notify.ban
 sanctrabans.notify.note
@@ -1141,7 +1350,14 @@ sanctrabans.notify.revoke
 sanctrabans.all
 ```
 
-`sanctrabans.all` includes every permission in this reference (punishments, lookup, alts, silent, check UUID/IP, notifications, and `/sanctrabans reload`).
+Or explicitly for owners who need staff audit without full `all`:
+```
+sanctrabans.staffcheck
+sanctrabans.staffcheck.rollback
+sanctrabans.staffcheck.rollback.dur.max
+```
+
+`sanctrabans.all` includes every permission in this reference (punishments, lookup, alts, staff check, rollback, silent, check UUID/IP, notifications, and `/sanctrabans reload`).
 
 ---
 
